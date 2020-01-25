@@ -1,11 +1,7 @@
 # SFG_aging_study
 Code for an ongoing research project (*"Testing aging deficits in auditory object perception"*). SFG stands for Stochastic Figure-Ground, a stimulus type used in auditory research that combines sets of randomly selected tones from a broad frequency range (*Background*) with short sequences of repeated tones (*Figure*). The latter is regularly perceived as an auditory object, that is, as a sound source separate from the background. For more on the figure-ground stimuli please see (among others):
 
-[Teki et al., 2011. Brain bases for auditory stimulus-driven figure–ground segregation](https://www.jneurosci.org/content/jneuro/31/1/164.full.pdf)
-
-[Teki et al., 2013. Segregation of complex acoustic scenes based on temporal coherence](https://elifesciences.org/articles/00699.pdf)
-
-[O'Sullivan et al., 2015. Evidence for neural computations of temporal coherence in an auditory scene and their enhancement during active listening](https://www.jneurosci.org/content/jneuro/35/18/7256.full.pdf)
+[Teki et al., 2011. Brain bases for auditory stimulus-driven figure–ground segregation](https://www.jneurosci.org/content/jneuro/31/1/164.full.pdf)\ [Teki et al., 2013. Segregation of complex acoustic scenes based on temporal coherence](https://elifesciences.org/articles/00699.pdf)\ [O'Sullivan et al., 2015. Evidence for neural computations of temporal coherence in an auditory scene and their enhancement during active listening](https://www.jneurosci.org/content/jneuro/35/18/7256.full.pdf)
 
 The study relies on [Psychtoolbox](https://psychtoolbox.org/) for stimulus generation/presentation and so related code is written in Matlab (developed with 2017a). Octave compatibility is not tested.
 
