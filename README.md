@@ -1,5 +1,5 @@
 # SFG_aging_study
-Code for the ongoing research project **Testing aging deficits in auditory object perception** 
+Code for the ongoing research project _**Testing aging deficits in auditory object perception**_ 
 <br></br>
 ## On SFG
 SFG stands for Stochastic Figure-Ground, a stimulus type used in auditory research that combines sets of randomly selected tones from a broad frequency range (*Background*) with short sequences of repeated tones (*Figure*). The latter is regularly perceived as an auditory object, that is, as a sound source separate from the background. 
