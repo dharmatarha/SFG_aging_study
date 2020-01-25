@@ -8,9 +8,10 @@ For more on the SFG please see (among others):
 - [Teki et al., 2013. Segregation of complex acoustic scenes based on temporal coherence](https://elifesciences.org/articles/00699.pdf)  
 - [O'Sullivan et al., 2015. Evidence for neural computations of temporal coherence in an auditory scene and their enhancement during active listening](https://www.jneurosci.org/content/jneuro/35/18/7256.full.pdf)
 
+
 The study relies on [Psychtoolbox](https://psychtoolbox.org/) for stimulus generation/presentation and so related code is written in Matlab (developed with 2017a). Octave compatibility is not tested nor aimed for at the moment.
 
-Functions in '/stimulus' are used for stimulus generation, functions in '/presentation' for stimulus presentation and recording responses. 
+Functions in ´/stimulus´ are used for stimulus generation, functions in ´/presentation´ for stimulus presentation and recording responses. 
 
 Code is free to all (MIT license) but please cite earlier work by the group:
 
