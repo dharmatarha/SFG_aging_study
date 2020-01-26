@@ -13,7 +13,9 @@ For more on the SFG please see (among others):
 The study relies on [Psychtoolbox](https://psychtoolbox.org/) for stimulus generation/presentation and so related code is written in Matlab (developed with 2017a). Octave compatibility is neither tested nor aimed for at the moment. 
 <br></br>
 ## Usage
-Functions in ´/stimulus´ are used for stimulus generation, functions in ´/presentation´ for stimulus presentation and recording responses. 
+Functions in `/stimulus` are used for stimulus generation:
+
+Functions in `/presentation` for stimulus presentation and recording responses:
 <br></br>
 ## Citation
 Code is free to all (MIT license) but please cite earlier work by the group:
