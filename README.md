@@ -6,8 +6,8 @@ SFG stands for Stochastic Figure-Ground, a stimulus type used in auditory resear
 
 For more on the SFG please see (among others):  
 - [Teki et al., 2011. Brain bases for auditory stimulus-driven figure–ground segregation](https://www.jneurosci.org/content/jneuro/31/1/164.full.pdf)  
-- [Teki et al., 2013. Segregation of complex acoustic scenes based on temporal coherence](https://elifesciences.org/articles/00699.pdf)  
 - [O'Sullivan et al., 2015. Evidence for neural computations of temporal coherence in an auditory scene and their enhancement during active listening](https://www.jneurosci.org/content/jneuro/35/18/7256.full.pdf)
+- [Tóth et al., 2016. EEG signatures accompanying auditory figure-ground segregation](https://europepmc.org/article/PMC/5656226)
 <br></br>
 ## Dependencies / environment
 The study relies on [Psychtoolbox](https://psychtoolbox.org/) for stimulus generation/presentation. While Psychtoolbox is compatible with Octave, development is in Matlab (2017a) and Octave compatibility is not tested. In principle though, adapting the functions to Octave should be simple.   
@@ -20,6 +20,7 @@ Functions in `/stimulus` are used for stimulus generation:
 - **getStimuliArray.m** - Aggregates stimulus (sub)sets into full ensemble
 - **plotChords.m** - Diagnostic and visualization tool: plot the chords defining a given stimulus next to its spectrogram
 - **getEnDiff.m** - Diagnostic tool testing for putative mean acoustic energy differences between two stimuli (sub)sets
+
 Functions in `/presentation` for stimulus presentation and recording responses:
 <br></br>
 ## Citation
