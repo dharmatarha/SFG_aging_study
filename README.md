@@ -13,13 +13,13 @@ For more on the SFG please see (among others):
 The study relies on [Psychtoolbox](https://psychtoolbox.org/) for stimulus generation/presentation. While Psychtoolbox is compatible with Octave, development is in Matlab (2017a) and Octave compatibility is not tested. In principle though, adapting the functions to Octave should be simple.   
 <br></br>
 ## Usage
-Functions in `/stimulus` are used for stimulus generation:
-1.**stimulusGenerationGlue.m** Glueing script for generating full stimulus ensemble for an experiment, needs to be edited for use case in question
-2.**SFGparams.m** Basic parameters for stimuli generation
-3.**createSFGstimuli.m** Generates given number of stimuli for specific parameters
-4.**getStimuliArray.m** Aggregates stimulus (sub)sets into full ensemble
-5.**plotChords.m** Diagnostic and visualization tool: plot the chords defining a given stimulus next to its spectrogram
-6.**getEnDiff.m** Diagnostic tool testing for putative mean acoustic energy differences between two stimuli (sub)sets
+Functions in `/stimulus` are used for stimulus generation:  
+1. **stimulusGenerationGlue.m** Glueing script for generating full stimulus ensemble for an experiment, needs to be edited for use case in question  
+2. **SFGparams.m** Basic parameters for stimuli generation
+3. **createSFGstimuli.m** Generates given number of stimuli for specific parameters
+4. **getStimuliArray.m** Aggregates stimulus (sub)sets into full ensemble
+5. **plotChords.m** Diagnostic and visualization tool: plot the chords defining a given stimulus next to its spectrogram
+6. **getEnDiff.m** Diagnostic tool testing for putative mean acoustic energy differences between two stimuli (sub)sets
 Functions in `/presentation` for stimulus presentation and recording responses:
 <br></br>
 ## Citation
