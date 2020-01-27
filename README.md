@@ -1,5 +1,5 @@
 # SFG_aging_study
-Code for the ongoing research project _**Testing aging deficits in auditory object perception**_ 
+Matlab code for the ongoing research project _**Testing aging deficits in auditory object perception**_ 
 <br></br>
 ## On SFG
 SFG stands for Stochastic Figure-Ground, a stimulus type used in auditory research that combines sets of randomly selected tones from a broad frequency range (*Background*) with short sequences of repeated tones (*Figure*). The latter is regularly perceived as an auditory object, that is, as a sound source separate from the background. 
@@ -10,7 +10,7 @@ For more on the SFG please see (among others):
 - [O'Sullivan et al., 2015. Evidence for neural computations of temporal coherence in an auditory scene and their enhancement during active listening](https://www.jneurosci.org/content/jneuro/35/18/7256.full.pdf)
 <br></br>
 ## Dependencies / environment
-The study relies on [Psychtoolbox](https://psychtoolbox.org/) for stimulus generation/presentation and so related code is written in Matlab (developed with 2017a). Octave compatibility is neither tested nor aimed for at the moment. 
+The study relies on [Psychtoolbox](https://psychtoolbox.org/) for stimulus generation/presentation. While Psychtoolbox is compatible with Octave, development is in Matlab (2017a) and Octave compatibility is not tested. In principle though, adapting the functions to Octave should be simple.   
 <br></br>
 ## Usage
 Functions in `/stimulus` are used for stimulus generation:
