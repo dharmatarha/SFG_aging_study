@@ -14,12 +14,12 @@ The study relies on [Psychtoolbox](https://psychtoolbox.org/) for stimulus gener
 <br></br>
 ## Usage
 Functions in `/stimulus` are used for stimulus generation:  
-1. **stimulusGenerationGlue.m** Glueing script for generating full stimulus ensemble for an experiment, needs to be edited for use case in question  
-2. **SFGparams.m** Basic parameters for stimuli generation
-3. **createSFGstimuli.m** Generates given number of stimuli for specific parameters
-4. **getStimuliArray.m** Aggregates stimulus (sub)sets into full ensemble
-5. **plotChords.m** Diagnostic and visualization tool: plot the chords defining a given stimulus next to its spectrogram
-6. **getEnDiff.m** Diagnostic tool testing for putative mean acoustic energy differences between two stimuli (sub)sets
+- **stimulusGenerationGlue.m** - Glueing script for generating full stimulus ensemble for an experiment, needs to be edited for use case in question  
+- **SFGparams.m**              - Basic parameters for stimuli generation
+- **createSFGstimuli.m**       - Generates given number of stimuli for specific parameters
+- **getStimuliArray.m**        - Aggregates stimulus (sub)sets into full ensemble
+- **plotChords.m** Diagnostic and visualization tool: plot the chords defining a given stimulus next to its spectrogram
+- **getEnDiff.m** Diagnostic tool testing for putative mean acoustic energy differences between two stimuli (sub)sets
 Functions in `/presentation` for stimulus presentation and recording responses:
 <br></br>
 ## Citation
