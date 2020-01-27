@@ -1,9 +1,0 @@
-filename,totalDuration_sec,chordDuration_sec,chordOnset_sec,figPresent,figureDuration,figureCoherence,sampleFrequency_Hz,figureStartInterval,figureEndInterval
-27-Jan-2020-1147_6-1,2,0.05,0.01,no,3,4,44100,17,19
-27-Jan-2020-1147_6-2,2,0.05,0.01,no,3,4,44100,32,34
-27-Jan-2020-1147_6-3,2,0.05,0.01,no,3,4,44100,22,24
-27-Jan-2020-1147_6-4,2,0.05,0.01,no,3,4,44100,8,10
-27-Jan-2020-1147_6-5,2,0.05,0.01,no,3,4,44100,10,12
-27-Jan-2020-1147_6-6,2,0.05,0.01,no,3,4,44100,5,7
-27-Jan-2020-1147_6-7,2,0.05,0.01,no,3,4,44100,12,14
-27-Jan-2020-1147_6-8,2,0.05,0.01,no,3,4,44100,6,8
