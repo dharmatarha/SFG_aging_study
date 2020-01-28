@@ -10,7 +10,7 @@ For more on the SFG please see (among others):
 - [Tóth et al., 2016. EEG signatures accompanying auditory figure-ground segregation](https://europepmc.org/article/PMC/5656226)
 <br></br>
 ## Dependencies / environment
-The study relies on [Psychtoolbox](https://psychtoolbox.org/) for stimulus generation/presentation. While Psychtoolbox is compatible with Octave, development is in Matlab (2017a) and Octave compatibility is not tested. In principle though, adapting the functions to Octave should be simple.   
+The study relies on [Psychtoolbox](https://psychtoolbox.org/) under Ubuntu 18.04 for stimulus generation/presentation. While Psychtoolbox is compatible with Octave, development is for Matlab (2017a) and Octave compatibility is not tested. In principle though, adapting the functions to Octave should be simple.   
 <br></br>
 ## Usage
 Functions in `/stimulus` are used for stimulus generation:  
