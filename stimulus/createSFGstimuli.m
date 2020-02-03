@@ -116,9 +116,9 @@ onsetOffsetRamp = [onsetRamp, ones(1, numberOfSamples  - 2*numberOfOnsetSamples)
 digits = ceil(log10(NStimuli + 1));
 
 % creating header for saved parameters
-outFile = cell(NStimuli+1, 10);
+outFile = cell(NStimuli+1, 13);
 outFile(1, :) = {'filename', 'totalDuration_sec', 'chordDuration_sec', 'chordOnset_sec', ...
-                 'figPresent', 'figureDuration', 'figureCoherence', 'sampleFrequency_Hz', ...
+                 'figPresent', 'figureDuration', 'figureCoherence', 'figureStepSize', 'snr', 'snrMaxDeviation', 'sampleFrequency_Hz', ...
                  'figureStartInterval', 'figureEndInterval'};
 
 % create directory for saving audio data + parameters files
@@ -159,6 +159,11 @@ for newstimulus = 1:NStimuli
     figureIntervals = (round(figureOnset/chordDuration) + 1):(round((totalDuration - figureOnset)/chordDuration) - figureDuration + 1);
     figureStartInterval = figureIntervals(randi([1, length(figureIntervals)], 1));
     figureEndInterval   = figureStartInterval + figureDuration - 1;
+    figureStepSize = stimopt.figureStepSize(randi([1, length(stimopt.figureStepSize)], 1));
+    snr = stimopt.snr(randi([1, length(stimopt.snr)], 1));
+    snrMaxDeviation = stimopt.snrMaxDeviation(randi([1, length(stimopt.snrMaxDeviation)], 1));
+    
+    averageToneCountToReachSnr = getAverageToneCountToReachSnr(snr, figureDuration, figureCoherence, stimulusChordNumber);
     
     % initializing left and right speaker outputs
     soundOutput  = zeros(2, sampleFrequency * totalDuration);
@@ -169,7 +174,12 @@ for newstimulus = 1:NStimuli
     for chordPosition = 1:stimulusChordNumber
         
         % number of pure tones in a chord in the background.
-        numberOfFrequencies = randi([toneComponents(1), toneComponents(end)], 1);
+        [minFreqsInChord, maxFreqsInChord] = determineBgFrequencyCountRange(toneComponents, snr, averageToneCountToReachSnr, snrMaxDeviation);
+        if maxFreqsInChord > toneFrequenciesSetlength
+            error('You have requested to generate more background tones (%f) than the length of the frequency grid (%f). Please adjust your settings accordingly.', maxFreqsInChord, toneFrequenciesSetlength);
+        end
+        numberOfFrequencies = randi([minFreqsInChord, maxFreqsInChord], 1);  
+        
         % selecting random background frequencies
         indexOfFrequencies = randperm(toneFrequenciesSetlength, numberOfFrequencies);
         backgroundUniqueFrequencies = round(exp(logFreq(indexOfFrequencies)));
@@ -181,20 +191,24 @@ for newstimulus = 1:NStimuli
         % do we have the figure in this chord position?
         if ((chordPosition >= figureStartInterval) && (chordPosition <= figureEndInterval) && (strcmp(figPresent, 'yes')))
             
-            % at the first chord the figure is present, define it
-            if (chordPosition == figureStartInterval)
-                % setting the figure frequencies
-                indexOfFigureFrequencies = randperm(toneFrequenciesSetlength, figureCoherence);
-                figureFrequencies   = round(exp(logFreq(indexOfFigureFrequencies)));
+            % define the figure's frequencies
+            if chordPosition == figureStartInterval
+                indexOfFigureFrequencies = defineFigure(figureStepSize, figureDuration, figureCoherence, toneFrequenciesSetlength);
+            else
+                % raise figure by the requested step size
+                indexOfFigureFrequencies = indexOfFigureFrequencies + figureStepSize;
             end
+            figureFrequencies = round(exp(logFreq(indexOfFigureFrequencies)));
             
             % for each chord in the figure remove the figure
             % frequencies from the background; we should also
             % check whether the complete figure + background noise
-            % contains more than max(toneComponents) tones. 
+            % contains more than maxFreqsInChord tones. 
             backgroundUniqueFrequencies = setdiff(backgroundUniqueFrequencies,figureFrequencies);
-            if length(backgroundUniqueFrequencies) + figureCoherence > toneComponents(end)
-                backgroundUniqueFrequencies(toneComponents(end)-figureCoherence+1:end) = [];
+            if snr ~= 0 && length(backgroundUniqueFrequencies) + figureCoherence > maxFreqsInChord
+                freqCountToRemove = length(backgroundUniqueFrequencies) + figureCoherence - maxFreqsInChord;
+                freqIndexesToRemove = randperm(length(backgroundUniqueFrequencies), freqCountToRemove);
+                backgroundUniqueFrequencies(freqIndexesToRemove) = [];
             end
 
             % creating figure tones for this chord
@@ -249,7 +263,7 @@ for newstimulus = 1:NStimuli
     c = clock;
     filename = strcat(wavDir, '-', temp, num2str(newstimulus));
     outFile(newstimulus+1, :) = {filename, totalDuration, chordDuration, chordOnset, ...
-                                 figPresent, figureDuration, figureCoherence, sampleFrequency, ...
+                                 figPresent, figureDuration, figureCoherence, figureStepSize, snr, snrMaxDeviation, sampleFrequency, ...
                                  figureStartInterval, figureEndInterval};
     audiowrite(strcat('./', wavDir, '/', filename, '.wav'), soundOutput', sampleFrequency);
     
@@ -274,6 +288,36 @@ disp([char(10), 'Task done, files and parameters are saved to directory ', wavDi
 
 return
 
+%% Helper functions
+
+function averageToneCountToReachSnr = getAverageToneCountToReachSnr(snr, figureDuration, figureCoherence, stimulusChordNumber)
+    figureToneCount = figureDuration * figureCoherence;
+    overallSignalToneCountPerChord = figureToneCount / stimulusChordNumber;
+    if (snr == 0)
+        averageToneCountToReachSnr = 0;
+    elseif (snr > 0)
+        averageBgToneCountToReachSnr = overallSignalToneCountPerChord / snr;
+        averageToneCountToReachSnr = averageBgToneCountToReachSnr + overallSignalToneCountPerChord;
+    end
+return
+
+function [minFreqsInChord, maxFreqsInChord] = determineBgFrequencyCountRange(toneComponents, snr, averageToneCountToReachSnr, snrMaxDeviation)
+    if (snr == 0)
+        minFreqsInChord = 0;
+        maxFreqsInChord = snrMaxDeviation;
+    elseif (snr > 0)
+        minFreqsInChord = round(averageToneCountToReachSnr - snrMaxDeviation);
+        maxFreqsInChord = round(averageToneCountToReachSnr + snrMaxDeviation);
+    else
+        minFreqsInChord = toneComponents(1);
+        maxFreqsInChord = toneComponents(end);
+    end
+return
+
+function indexOfFigureFrequencies = defineFigure(figureStepSize, figureDuration, figureCoherence, toneFrequenciesSetlength)
+    figureRampHeight = figureStepSize * figureDuration;
+    indexOfFigureFrequencies = randperm(toneFrequenciesSetlength - (figureRampHeight - 1), figureCoherence); 
+return
 
 
 
