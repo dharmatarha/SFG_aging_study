@@ -204,11 +204,9 @@ for newstimulus = 1:NStimuli
             % frequencies from the background; we should also
             % check whether the complete figure + background noise
             % contains more than maxFreqsInChord tones. 
-            backgroundUniqueFrequencies = setdiff(backgroundUniqueFrequencies,figureFrequencies);
+            backgroundUniqueFrequencies = setdiff(backgroundUniqueFrequencies,figureFrequencies, 'stable');
             if snr ~= 0 && length(backgroundUniqueFrequencies) + figureCoherence > maxFreqsInChord
-                freqCountToRemove = length(backgroundUniqueFrequencies) + figureCoherence - maxFreqsInChord;
-                freqIndexesToRemove = randperm(length(backgroundUniqueFrequencies), freqCountToRemove);
-                backgroundUniqueFrequencies(freqIndexesToRemove) = [];
+                backgroundUniqueFrequencies(maxFreqsInChord-figureCoherence+1:end) = [];
             end
 
             % creating figure tones for this chord
