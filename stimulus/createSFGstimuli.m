@@ -71,10 +71,10 @@ if ~isstruct(stimopt) || isempty(stimopt)
 end
 
 % user message at function start
-disp([char(10), 'Called createSFGstimuli function with input args:',...
-    char(10), 'NStimuli: ', num2str(NStimuli),...
-    char(10), 'figPresent: ', figPresent, ...
-    char(10), 'stimopt: ']);
+disp([newline, 'Called createSFGstimuli function with input args:',...
+    newline, 'NStimuli: ', num2str(NStimuli),...
+    newline, 'figPresent: ', figPresent, ...
+    newline, 'stimopt: ']);
 disp(stimopt);
 
 
@@ -140,8 +140,8 @@ paramsFile = ['./', wavDir, '/', wavDir, '_stimopt.mat'];
 save(paramsFile, 'stimopt', 'figPresent');
 
 % user message
-disp([char(10),'Created stimulus directory at ', wavDir, ',',...
-    char(10), 'prepared parameters/settings, now generating stimuli...']);
+disp([newline,'Created stimulus directory at ', wavDir, ',',...
+    newline, 'prepared parameters/settings, now generating stimuli...']);
 
 
 %% Stimulus generation loop
@@ -163,7 +163,7 @@ for newstimulus = 1:NStimuli
     snr = stimopt.snr(randi([1, length(stimopt.snr)], 1));
     snrMaxDeviation = stimopt.snrMaxDeviation(randi([1, length(stimopt.snrMaxDeviation)], 1));
     
-    averageToneCountToReachSnr = getAverageToneCountToReachSnr(snr, figureDuration, figureCoherence, stimulusChordNumber);
+    averageToneCountToReachSnr = getAverageBgToneCountToReachSnr(snr, figureDuration, figureCoherence, stimulusChordNumber);
     
     % initializing left and right speaker outputs
     soundOutput  = zeros(2, sampleFrequency * totalDuration);
@@ -281,21 +281,20 @@ T = cell2table(outFile(2:end,:), 'VariableNames', outFile(1,:));
  
 % Write the table to a CSV file, final user message
 writetable(T,strcat('./', wavDir, '/', strcat(wavDir, '-', 'StimuliData.csv')));
-disp([char(10), 'Task done, files and parameters are saved to directory ', wavDir, char(10)]);
+disp([newline, 'Task done, files and parameters are saved to directory ', wavDir, newline]);
 
 
 return
 
 %% Helper functions
 
-function averageToneCountToReachSnr = getAverageToneCountToReachSnr(snr, figureDuration, figureCoherence, stimulusChordNumber)
+function averageBgToneCountToReachSnr = getAverageBgToneCountToReachSnr(snr, figureDuration, figureCoherence, stimulusChordNumber)
     figureToneCount = figureDuration * figureCoherence;
     overallSignalToneCountPerChord = figureToneCount / stimulusChordNumber;
     if (snr == 0)
-        averageToneCountToReachSnr = 0;
+        averageBgToneCountToReachSnr = 0;
     elseif (snr > 0)
         averageBgToneCountToReachSnr = overallSignalToneCountPerChord / snr;
-        averageToneCountToReachSnr = averageBgToneCountToReachSnr + overallSignalToneCountPerChord;
     end
 return
 
@@ -313,8 +312,11 @@ function [minFreqsInChord, maxFreqsInChord] = determineBgFrequencyCountRange(ton
 return
 
 function indexOfFigureFrequencies = defineFigure(figureStepSize, figureDuration, figureCoherence, toneFrequenciesSetlength)
-    figureRampHeight = figureStepSize * figureDuration;
+    figureRampHeight = abs(figureStepSize) * figureDuration;
     indexOfFigureFrequencies = randperm(toneFrequenciesSetlength - (figureRampHeight - 1), figureCoherence); 
+    if figureStepSize < 0
+        indexOfFigureFrequencies = indexOfFigureFrequencies + (figureRampHeight - 1); 
+    end
 return
 
 
