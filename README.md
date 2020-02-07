@@ -21,7 +21,10 @@ Functions in `/stimulus` are used for stimulus generation:
 - **plotChords.m** - Diagnostic and visualization tool: plot the chords defining a given stimulus next to its spectrogram
 - **getEnDiff.m** - Diagnostic tool testing for acoustic energy differences between two stimuli (sub)sets
 
-Functions in `/presentation` for stimulus presentation and recording responses:
+Functions in `/presentation` for stimulus presentation and recording responses:  
+- **SFGmain.m** - Main experimental script responsible for stimulus presentation and recording responses. Requires the rest of the functions under `/presentation`. Good enough for piloting, doesn't fully handle yet triggers for EEG. Responses are expected via regualar keyboards.
+- **expParamsHandler.m** - Helper function for detecting existing parameters/settings and results for subjects in a multi-session experiment. Also handles loading and sorting of stimuli, saving subject-specific parameters, etc. Requires stim2blocks.m
+- **stim2blocks.m** - Helper function detecting unique stimulus types in a stimulus array and sorting them into the required number of blocks. Ensures that the same number of stimuli from each stimulus type is in each block (basic counterbalancing across blocks).
 <br></br>
 ## Citation
 Code is free to all (MIT license) but please cite earlier work by the group:
