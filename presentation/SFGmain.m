@@ -1,28 +1,39 @@
-%Figure-ground experiment. G.P. H�den, 2015
+function SFGmain(subNum, stimArrayFile, blockNo)
+%% Stochastic figure-ground experiment - main experimental script
 %
-%usage: fg(subject number) /positive integer/
-
-function []=fg_v4(subNum, stimArrayFile, blockNo)
-%% Stochastic figure-ground experiment - main (experimental) session
+% USAGE: SFGmain(subNum, stimArrayFile, blockNo)
 %
-% SFG stimulus presentation script.
+% Stimulus presentation script for stochastic figure-ground (SFG) experiment. 
+% The script requires pre-generated stimuli organized into a
+% "stimArrayFile". See the functions in /stimulus for details on producing
+% stimuli. 
+% The script also requires stim2blocks.m for sorting stimuli into blocks
+% and expParamsHandler.m for handling the loading of stimuli and existing
+% parameters/settings, and also for detecting and handling earlier sessions 
+% by the same subject (for multi-session experiment).
 %
 % Inputs:
 % subNum        - Subject number, integer between 1-999
-% stimArray     - *.mat file with cell array "stimArray" containing all 
-%               stimuli
+% stimArrayFile - *.mat file with cell array "stimArray" containing all 
+%               stimuli + features (size: no. of stimuli X 11 columns)
 % blockNo       - Number of blocks to sort trials into, integer between
 %               1-50
 % 
+% Results (response times and presentation timestamps for later checks) are
+% saved out into /subjectXX/subXXLog.mat, where XX stands for subject
+% number.
+%
 % NOTES:
 % (1) Responses are counterbalanced across subjects, based on subject
 % numbers (i.e., based on mod(subNum, 2)). This is a hard-coded method!!
 % (2) Response keys are "L" and "S", hard-coded!!
-% (3) Logging (result) variable columns: 
-%   logHeader={'subNum', 'blockNo', 'trialNo', 'stimNo', 'figDuration',... 
-%       'figCoherence', 'figPresence', 'accuracy', 'buttonResponse',... 
-%       'respTime', 'iti', 'trialStart', 'soundOnset', 'figureStart',... 
-%       'respIntervalStart', 'trigger'}; 
+% (3) Main psychtoolbox settings are hard-coded!! Look for the psychtoolbox
+% initialization + the audio parameters code block for details
+% (4) Logging (result) variable columns: 
+% logHeader={'subNum', 'blockNo', 'trialNo', 'stimNo', 'figDuration',... 
+%     'figCoherence', 'figPresence', 'figStartChord', 'figEndChord',... 
+%     'accuracy', 'buttonResponse', 'respTime', 'iti', 'trialStart',... 
+%     'soundOnset', 'figureStart', 'respIntervalStart', 'trigger'};
 %
 %
 
@@ -59,11 +70,10 @@ disp([char(10), 'Loading params and stimuli, checking ',...
 
 % a function handles all stimulus sorting to blocks and potential conflicts
 % with earlier recordings for same subject
-[stimArray, sortIndices, startTrialNo,... 
+[stimArray, ~, startTrialNo,... 
     startBlockNo, blockIdx, trialIdx,...
     logVar, subLogF, returnFlag,... 
-    logHeader, stimTypes,...
-    stimTypeIdx] = expParamsHandler(subNum, stimArrayFile, blockNo);
+    logHeader, stimTypes] = expParamsHandler(subNum, stimArrayFile, blockNo);
 
 % if there was early return from expParamsHandler.m, abort
 if returnFlag
@@ -498,16 +508,17 @@ for block = startBlockNo:blockNo
         end
         % cumulative accuraccy
         % in block
-        blockAcc = sum(acc(trial-trialCounterForBlock+1:trial))/trialCounterForBlock*100;
+        blockAcc = sum(acc(trial-trialCounterForBlock+1:trial), 'omitnan')/trialCounterForBlock*100;
         disp(['Overall accuraccy in block so far is ', num2str(blockAcc), '%']);
         
         % accumulating all results in logging / results variable
-        logVar(trial+1, 10:end-1) = {acc(trial), figDetect(trial), respTime(trial), iti(trial),...
+        logVar(trial+1, 10:end-1) = {acc(trial), figDetect(trial),... 
+            respTime(trial), iti(trial),...
             trialStart, startTime-trialStart,... 
-            startTime-trialStart+(figStartCord(trial)-1)*chordLength,... 
+            (figStartCord(trial)-1)*chordLength,... 
             respStart-startTime};
         
-        % save logging/resutls variable
+        % save logging/results variable
         save(subLogF, 'logVar');
         
     end  % trial for loop
@@ -523,7 +534,7 @@ for block = startBlockNo:blockNo
         
         % block ending text
         blockEndText = ['Vége a(z) ', num2str(block), '. blokknak!\n\n\n',... 
-                'Ebben a blokkban a próbák ', num2str(round(blockAcc,2)), '%-ra adott helyes választ.\n\n\n',... 
+                'Ebben a blokkban a próbák ', num2str(round(blockAcc, 2)), '%-ra adott helyes választ.\n\n\n',... 
                 'Nyomja meg a SPACE billentyűt ha készen áll a következő blokkra!'];
         % uniform background
         Screen('FillRect', win, backGroundColor);

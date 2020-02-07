@@ -1,16 +1,17 @@
 function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocks(stimArrayFile, blockNo)
 %% Helper function sorting stimuli to blocks and trials
 %
+% USAGE: [blockIdx, stimTypes, stimTypeIdx, stimArray] = stim2blocks(stimArrayFile, blockNo)
+%
 % For stochastic figure-ground (SFG) experiment. The function examines the
 % stimuli array for unique stimuli types and creates blocks containing
 % equal number of trials with each unique stimulus type. Returns block and
 % trial indices for each stimulus.
 %
-% USAGE: [blockIdx, stimTypes, stimTypeIdx, stimArray] = stim2blocks(stimArrayFile, blockNo)
 %
 % Inputs:
-% stimArray     - *.mat file with cell array "stimArray" containing all 
-%               stimuli
+% stimArrayFile - *.mat file with cell array "stimArray" containing all 
+%               stimuli + features (size: no. of stimuli X 11 columns)
 % blockNo       - Number of blocks to sort trials into, integer between
 %               1-50
 %
@@ -58,9 +59,11 @@ disp([char(10), 'Called stim2blocks with input args: ',...
 
 %% Loading stimuli, sanity checks
 
-%%%%%% HARD-CODED VALUE!!! %%%%%
+%%%%%% HARD-CODED VALUES %%%%%
 % number of expected cell columns for the stimuli array
 stimFeaturesNo = 11;
+% header for final stimTypes cell array (see the last code block)
+stimTypesHdr = {'figDuration', 'figCoherence', 'figPresence', 'stimulusTypeIndex'};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % load stimuli
@@ -158,6 +161,15 @@ end
 
 % user message
 disp([char(10), 'Randomized trial order within blocks, generated final trial indices vector']);
+
+
+%% Transform stimTypes varialbe into human readable form 
+
+% get cell array with headers
+stimTypes = [stimTypesHdr; num2cell([stimTypes, [1:size(stimTypes, 1)]'])];
+
+disp([char(10), 'Detailed information about stimulus types is stored in '...
+    'the stimTypes cell array']);
 
 
 return
