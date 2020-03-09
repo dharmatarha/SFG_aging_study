@@ -391,7 +391,7 @@ if abortFlag
     RestrictKeysForKbCheck([]);
     PsychPortAudio('Close');
     Screen('CloseAll');
-    ShowCursor(screenNumber);
+    ShowCursor(screenNumber);startTime = PsychPortAudio('Start', pahandle, 1, trialStart+iti(trial), 1);
     return;
 end
 
