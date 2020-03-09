@@ -48,30 +48,28 @@ end
 [wavData, wavFs] = audioread(fileN); 
 
 % extract audio and figure features
-fs = T(wavN, :).sampleFrequency_Hz;  % sampling freq (Hz)
-dur = T(wavN, :).totalDuration_sec;  % duration of stimulus in secs
-chordDur = T(wavN, :).chordDuration_sec;  % chord duration in secs
-figPresent = T(wavN, :).figPresent;  % figure coherent or random ('yes' or 'no')
-figDur = T(wavN, :).figureDuration;  % figure duration in chords
-figCoh = T(wavN, :).figureCoherence;  % figure coherence in chords
-figStepSize = T(wavN, :).figureStepSize;  % figure step size (within the frequency grid)
+fs = T(wavN, :).sampleFreq;  % sampling freq (Hz)
+dur = T(wavN, :).totalDur;  % duration of stimulus in secs
+chordDur = T(wavN, :).chordDur;  % chord duration in secs
+figDur = T(wavN, :).figureDur;  % figure duration in chords
+figCoh = T(wavN, :).figureCoh;  % figure coherence in chords
+figStepSize = T(wavN, :).figureStepS;  % figure step size (within the frequency grid)
 figStart = T(wavN, :).figureStartInterval;  % figure start time in chords
 figEnd = T(wavN, :).figureEndInterval;  % last figure element in chords
-snr = T(wavN, :).snr;  % signal-to-noise ratio
 
 % load detailed chord information
 chordF = [folder, '/', folder, '_chordInfo.mat'];
 load(chordF);
 % chord info for given stimulus
-backgChords = allBackgroundFrequencies(wavN, :);
-figChords = allFigureFrequencies(wavN, :);
+backgChords = allBackgrFreqs(wavN, :);
+figChords = allFigFreqs(wavN, :);
 chordN = size(backgChords, 2);
 
 % check stimulus generation options for the frequency range used
 stimoptF = [folder, '/', folder, '_stimopt.mat'];
 load(stimoptF);
-freqLimits = [stimopt.toneFrequenciesMin, stimopt.toneFrequenciesMax];
-maxSize = max(stimopt.toneComponents);
+freqLimits = [stimopt.toneFreqMin, stimopt.toneFreqMax];
+maxSize = max(stimopt.toneComp);
 
 % sanity checks
 if ~isequal(wavFs, fs) || ~isequal(size(wavData, 1), dur*fs)
@@ -84,14 +82,12 @@ end
 
 % user message
 disp([char(10), 'Properties of stimulus no. ', num2str(wavN), ' according to parameter files:', char(10),...
-    'Coherent figure in stimulus (as opposed to random added chords): ', figPresent, char(10),...
     'Figure coherence level: ', num2str(figCoh), char(10),...
     'Figure step size: ', num2str(figStepSize), char(10),...
     'Figure duration: ', num2str(figDur), ' chords', char(10),...
     'Figure starts at chord: ', num2str(figStart), char(10),...
     'Figure ends at chord: ', num2str(figEnd), char(10),...
     'Chord duration: ', num2str(chordDur*1000), ' ms', char(10),...
-    'Signal-to-noise ratio: ', num2str(snr), char(10),...
     'Total stimulus duration: ', num2str(dur*1000), ' ms']);
 
 
@@ -156,7 +152,7 @@ line(linX, linY, 'Color', 'w', 'LineWidth', 2);
 markerX = [(figStart-0.5)*dur/chordN:dur/chordN:(figEnd-0.5)*dur/chordN];
 markerFreqs = figFreqs;
 markerFreqs(isnan(markerFreqs)) = 0;
-markerFreqs(ismember(markerFreqs, zeros(1,4), 'rows'), :) = [];
+markerFreqs(ismember(markerFreqs, zeros(1, figCoh), 'rows'), :) = [];
 plot(markerX, markerFreqs/1000, 'wx', 'LineWidth', 2, 'MarkerSize',12);  % emphasize figure frequency components
 % subplot details
 title({['Spectrogram of stim. ', num2str(wavN)], [' in ', folder]});
@@ -164,7 +160,7 @@ hold off;
 
 % Set overall figure features
 set(gcf,'color','w');
-figureTitle = ['StimNo_', num2str(wavN), '__Figure_', figPresent, '__Coh_', num2str(figCoh), '__Dur_', num2str(figDur)];
+figureTitle = ['StimNo_', num2str(wavN), 'Coh_', num2str(figCoh), '__Dur_', num2str(figDur)];
 set(gcf, 'NumberTitle', 'off', 'Name', figureTitle);
 set(gca, 'FontSize', 14);
 set(gcf, 'Units', 'Normalized', 'OuterPosition', [0.1, 0.1, 0.9, 0.9]);
