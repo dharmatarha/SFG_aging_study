@@ -16,16 +16,16 @@ function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocksTr
 % seqFeatures   - Matrix with figure duration (column one) and coherence 
 %               values (column two). Each row specifies the duration and
 %               coherence values needed for sequence. Row index corresponds
-%               to sequence number. Defaults the training settings used in
+%               to sequence number. Defaults to the training settings used in
 %               Toth et al., 2016, EEG signatures accompanying...:
 %               [5,6; 3,8; 4,4; 3,6; 3,4; 2,3]
 %
 % Outputs:
 % blockIdx      - Numeric column vector with a block index for each
 %               stimulus in the stimuli array
-% stimTypes     - Matrix where each line corresponds to a unique stimulus 
+% stimTypes     - Matrix where each row corresponds to a unique stimulus 
 %               type in terms of figure duration, coherence level and 
-%               figure presence/absence. Irs size is "no. of unique types" 
+%               figure presence/absence. Its size is "no. of unique types" 
 %               X 3, with columns corresponding to duration, coherence and
 %               figure presence/absence
 % stimTypeIdx   - Numeric column vector with a stimulus type index for each
