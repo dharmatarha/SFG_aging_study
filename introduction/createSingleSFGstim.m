@@ -1,6 +1,6 @@
 
 function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt)
-%% Generates a single SFG stimulus
+%% Generates a single stochastic figure-ground (SFG) stimulus
 %
 % Returns two-channel audio (2 X samples) of SFG stimulus for the
 % parameters passed in stimopt struct.
@@ -9,25 +9,8 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 %
 % Input:
 % stimopt       - Struct containing all necessary parameters of stimulus.
-%               Fields and their meanings: 
-%       totalDur     - Total duration in seconds.
-%       chordDur     - Chord duration in seconds 
-%       toneComp     - Number of tone components in one chord (background +
-%                   figure)
-%       toneFreqSetL - Number of frequency components in the
-%                   (half-semitone) set generated between the supplied Min 
-%                   and Max values (log scale)
-%       toneFreqMin  - Minimum value for the frequency set
-%       toneFreqMax  - Maximum value for the frequency set
-%       chordOnset   - Duration of the onset and offset of a chord in sec
-%       figureDur    - Duration of figure in chords
-%       figureCoh    - Figure coherence level (no of tones moving together)
-%       figureOnset  - Earliest onset of the figure in the stimuli, sec
-%       figureStepS  - Figure step size in terms of the frequency component
-%                   set
-%       sampleFreq   - Sampling frequency
-%       randomSeed   - Seed for random number generator, for
-%                   reproducibility, optional
+%               The list of fields required is below, for details see 
+%               SFGparams.m
 %
 % Outputs:
 % soundOutput       - Numeric matrix corresponding to the audio stimulus.
@@ -40,8 +23,12 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 %                   background contruction. Its size is no. of tone 
 %                   components X no. of chords
 %
-% NOTES:
+% Fields of stimopt struct:
+% sampleFreq, chordOnset, chordDur, figureMinOnset, figureOnset, 
+% totalDur, toneComp, toneFreqMax, toneFreqMin, 
+% toneFreqSetL, figureDur, figureCoh, figureStepS
 %
+% NOTES:
 % (1) Typical stimopt struct:
 % stimopt = struct( ...
 %     'totalDur', 2, ...
@@ -53,14 +40,17 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 %     'chordOnset', 0.01, ...
 %     'figureDur', 12, ...
 %     'figureCoh', 4, ...
-%     'figureOnset', 0.2, ...
+%     'figureMinOnset', 0.2, ...
+%     'figureOnset', nan, ...
 %     'figureStepS', -2, ...
 %     'sampleFreq', 44100, ...
 %     'randomSeed', 'some seed here');
-% 
 % (2) On our lab machines it should reliably run in ~50 ms, taking 
 %   slightly longer on occasion. Allocating 100 ms should be more than
-%   enough.
+%   enough when used in a trial loop generating its own stimuli.
+% (3) As this script is intended to be used in experimental scripts
+% generating stimuli on the fly, there are no user messages printed to the
+% command window (unlike in createSFGstimuli.m).
 %
 % Based on earlier scripts by Tamas Kurics, Zsuzsanna Kocsis and Botond 
 % Hajdu, ex-members of the lab.
@@ -84,6 +74,15 @@ if isfield(stimopt, 'randomSeed')
     rng(stimopt.randomSeed); 
 end
 
+% if there is no value in stimopt.figureOnset, set it to nan
+if isempty(stimopt.figureOnset)
+    stimopt.figureOnset = nan;
+end
+% check the range of figureOnset
+if stimopt.figureOnset < ceil(stimopt.figureMinOnset/stimopt.chordDur)
+    error('The supplied figure onset value is below the minimum onset value!');
+end
+
 % generating logarithmically uniform frequency range for the random
 % background
 logFreq = linspace(log(stimopt.toneFreqMin), log(stimopt.toneFreqMax), stimopt.toneFreqSetL);
@@ -100,11 +99,17 @@ numberOfOnsetSamples = stimopt.sampleFreq * stimopt.chordOnset;
 onsetRamp = sin(linspace(0, 1, numberOfOnsetSamples) * pi / 2);
 onsetOffsetRamp = [onsetRamp, ones(1, numberOfSamples  - 2*numberOfOnsetSamples), fliplr(onsetRamp)];
 
-% setting figure random parameters for each stimulus
-figureIntervals = (round(stimopt.figureOnset/stimopt.chordDur) + 1):(round((stimopt.totalDur - stimopt.figureOnset)/stimopt.chordDur) - stimopt.figureDur + 1);
-figureStartInterval = figureIntervals(randi([1, length(figureIntervals)], 1));
-figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
-    
+% setting figure random parameters for each stimulus if needed
+if isnan(stimopt.figureOnset)
+    % setting figure random parameters for each stimulus
+    figureIntervals = (round(stimopt.figureMinOnset/stimopt.chordDur) + 1):(round((stimopt.totalDur - stimopt.figureMinOnset)/stimopt.chordDur) - stimopt.figureDur + 1);
+    figureStartInterval = figureIntervals(randi([1, length(figureIntervals)], 1));
+    figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
+else
+    figureStartInterval = stimopt.figureOnset;
+    figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
+end
+
 % initializing left and right speaker outputs
 soundOutput  = zeros(2, stimopt.sampleFreq * stimopt.totalDur);
 soundIndex = 1;  % counter for filling soundOutput with chords
