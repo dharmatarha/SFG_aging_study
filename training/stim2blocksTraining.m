@@ -2,7 +2,7 @@ function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocksTr
 %% Helper function sorting stimuli to training sequences
 %
 % USAGE: [blockIdx, stimTypes, stimTypeIdx, stimArray] = 
-%           stim2blocksTraining(stimArrayFile, seqFeatures=[5,6; 3,8; 4,4; 3,6; 3,4; 2,3])
+%           stim2blocksTraining(stimArrayFile, seqFeatures=[10,10; 10,9; 10,8; 10,7; 10,6; 10,5])
 %
 % For training phase of stochastic figure-ground (SFG) experiment. 
 % The function examines the stimuli array for unique stimuli types and 
@@ -16,19 +16,19 @@ function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocksTr
 % seqFeatures   - Matrix with figure duration (column one) and coherence 
 %               values (column two). Each row specifies the duration and
 %               coherence values needed for sequence. Row index corresponds
-%               to sequence number. Defaults to the training settings used in
-%               Toth et al., 2016, EEG signatures accompanying...:
-%               [5,6; 3,8; 4,4; 3,6; 3,4; 2,3]
+%               to sequence number. Aim is to imitate the training setup used in
+%               Toth et al., 2016, EEG signatures accompanying...
+%               Defaults to [10,10; 10,9; 10,8; 10,7; 10,6; 10,5]    
+%               
 %
 % Outputs:
 % blockIdx      - Numeric column vector with a block index for each
 %               stimulus in the stimuli array
-% stimTypes     - Matrix where each row corresponds to a unique stimulus 
-%               type in terms of figure duration, coherence level and 
-%               figure presence/absence. Its size is "no. of unique types" 
-%               X 3, with columns corresponding to duration, coherence and
-%               figure presence/absence
-% stimTypeIdx   - Numeric column vector with a stimulus type index for each
+% stimTypes     - Matrix where each row corresponds to a unique figure
+%               type in terms of figure duration and coherence level. 
+%               Its size is "no. of unique types" X 2, with columns 
+%               corresponding to duration and coherence.
+% stimTypeIdx   - Numeric column vector with a figure type index for each
 %               stimulus in the stimuli array. Index numbers correspond to 
 %               the rows of the stimTypes output variable 
 % stimArray     - Stimulus array (cell), with the 11th column storing the
@@ -48,14 +48,14 @@ if ~ismember(nargin, [1 2])
     error('Function needs mandatory input arg "stimArray" and optional arg "seqFeatures"!');
 end
 if nargin == 1
-    seqFeatures = [5,6; 3,8; 4,4; 3,6; 3,4; 2,3];
+    seqFeatures = [10,10; 10,9; 10,8; 10,7; 10,6; 10,5];
 end
 % file with stimuli array
 if ~exist(stimArrayFile, 'file')
     error('Cannot find input arg "stimArrayFile"!');
 end
 % number of sequences
-if ~ismembertol(size(seqFeatures, 1), [1:50])
+if ~ismembertol(size(seqFeatures, 1), 1:50)
     error('Number of training sequences should be between 1 - 50!');
 end
 
@@ -77,7 +77,7 @@ blockNo = size(seqFeatures, 1);
 % number of expected cell columns for the stimuli array
 stimFeaturesNo = 11;
 % header for final stimTypes cell array (see the last code block)
-stimTypesHdr = {'figDuration', 'figCoherence', 'figPresence', 'stimulusTypeIndex'};
+stimTypesHdr = {'figDuration', 'figCoherence', 'stimulusTypeIndex'};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % load stimuli
@@ -103,58 +103,97 @@ disp([char(10), 'Loaded stimuli array, found ', num2str(trialNo), ' trials, ',..
 
 % get number of unique stimulus types based on figure presence/absence, 
 % coherence and duration
-durValues = cell2mat(stimArray(:, 6));
-cohValues = cell2mat(stimArray(:, 7));
-figPresent = stimArray(:, 5);
-% turn figPresent cell array of strings to numeric 0/1
-figPresentNum = zeros(length(figPresent), 1);
-figPresentNum(strcmp(figPresent, 'yes')) = 1;
-% unique combinations
-[stimTypes, ~, stimTypeIdx] = unique([durValues, cohValues, figPresentNum], 'rows');
+durValues = cell2mat(stimArray(:, 5));
+cohValues = cell2mat(stimArray(:, 6));
+figPresent = cohValues~=0;  % where coherence is 0, there is no figure
 
-% user message
-disp([char(10), 'There are ', num2str(size(stimTypes, 1)),... 
-    ' different trial types  in the stimuli array ',... 
-    char(10), '(in terms of figure presence/absence, ',...
-    'duration and coherence).'])
+% % focus only on stimuli with figure
+% durValuesFig = durValues;
+% durValuesFig(~figPresent) = [];
+% cohValuesFig = cohValues;
+% cohValuesFig(~figPresent) = [];
 
-% check how many of each unique types we have
-stimTypesNumbers = nan(size(stimTypes, 1), 1);
+% unique combinations for stimuli with figure
+[stimTypes, ~, stimTypeIdx] = unique([durValues, cohValues], 'rows');
+
+% focus first on combinations with figure present (coherence ~= 0)
+stimTypesFig = stimTypes;
+stimTypesFig(stimTypesFig(:, 2)==0, :) = [];
+
+% user message about unique figure types
+disp([char(10), 'There are ', num2str(size(stimTypesFig, 1)),... 
+    ' different figure types in the stimuli array ',... 
+    char(10), '(in terms of duration and coherence).'])
+
+% check how many of each unique figure types we have
+figTypesNumbers = nan(size(stimTypes, 1), 1);
 for i = 1:size(stimTypes, 1)
-    stimTypesNumbers(i) = sum(stimTypeIdx==i);
+    % only look at unique figure types now
+    if stimTypes(i ,2) ~= 0
+        figTypesNumbers(i) = sum(stimTypeIdx==i);
+    end
 end
+figTypesNumbers(isnan(figTypesNumbers)) = [];
 
 % if there are different numbers for trial types, that is a problem, throw
 % error, otherwise report the number per type and per type per block
-if length(unique(stimTypesNumbers)) ~= 1
+if length(unique(figTypesNumbers)) ~= 1
     disp([char(10), 'Stimulus types in terms of duration, coherence and figure presence:']);
     disp(stimTypes);
     disp('Number of trials per stimulus type:');
-    disp(stimTypesNumbers);
+    disp(figTypesNumbers);
     error('There are different numbers of trials for different trial types!');
 else
-    stimNoPerType = unique(stimTypesNumbers);
+    stimNoPerType = unique(figTypesNumbers);
     disp([char(10), 'There are ', num2str(stimNoPerType), ' trials for each trial type']);
 end
 
 
-%% Sort stimuli into blocks
+%% Check stimuli without figure
+
+% we expect that the no. of stimuli without figure equals the no. of
+% stimuli with figure
+if ~isequal(sum(figPresent), trialNo/2)
+    error(['There are ', num2str(sum(figPresent)), ' stimuli with figure and ',...
+        num2str(sum(figPresent==0)), ' stimuli without figure, there is a problem!']);
+end
+
+
+%% Sort stimuli with figure into blocks
 
 % split trials into blocks according to seqFeatures
 blockIdx = nan(trialNo, 1); % block index for each stimulus
 for seq = 1:blockNo
-    % which unique trial types correspond to the features of the current sequence
-    idx = find(ismember(stimTypes(:, 1:2), seqFeatures(seq,:),'rows'));
-    % go through the unique trial types corresponding to sequence
-    for t = idx'
-        % assign the right block (=sequence) number to stimuli with the
-        % current stimulus type
-        blockIdx(stimTypeIdx==t) = seq;
-    end
+    % which unique figure type corresponds to the features of the current
+    % sequence (duration + coherence value)
+    idx = find(ismember(stimTypes(:, 1:2), seqFeatures(seq,:), 'rows'));
+    % go through the duration and coherence values of all trials, look for
+    % the ones with the current stimType
+    blockIdx(ismember([durValues, cohValues], stimTypes(idx, 1:2), 'rows')) = seq;
 end
 
 % user message
-disp([char(10), 'Sorted stimuli into blocks, with equal number of trials per type per block']);
+disp([char(10), 'Sorted stimuli with figure into blocks, with equal number of trials per type per block']);
+
+
+%% Sort equal numbers of stimuli without figure to each block
+
+% initial set of indices for stimuli without a figure
+idx = find(figPresent==0);
+% go through all blocks
+for seq = 1:blockNo
+    % select a random subset of stimuli without figure
+    seqIdx = idx(randperm(length(idx), stimNoPerType));
+    % assign the selected stimuli to the right block
+    blockIdx(seqIdx) = seq;
+    % set the selected subset of available indices to stg out of range
+    figPresent(seqIdx) = 999;
+    % define again the available set of non-figure stimuli indices
+    idx = find(figPresent==0);
+end
+    
+% user message
+disp([char(10), 'Sorted stimuli without figure into blocks, with equal number of trials per block']);
 
 
 %% Get exact trial indices for stimuli, return
@@ -174,7 +213,7 @@ for block = 1:blockNo
             num2str(stimNoPerBlock), ', investigate!']);
     end
     % trial indices for given block, in order
-    trialIdxForBlock = [(block-1)*stimNoPerBlock+1:block*stimNoPerBlock]; 
+    trialIdxForBlock = (block-1)*stimNoPerBlock+1:block*stimNoPerBlock; 
     % randomizing trial indices for given block
     trialIdxForBlock = trialIdxForBlock(randperm(length(trialIdxForBlock)));
     % assigning the randomized trial indices to the stimuli corresponding
