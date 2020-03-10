@@ -2,11 +2,14 @@
 function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt)
 %% Generates a single SFG stimulus
 %
+% USAGE: [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt)
+%
 % Returns two-channel audio (2 X samples) of SFG stimulus for the
 % parameters passed in stimopt struct. To be used in cases where an
 % experimental script needs to generate stimuli on the fly, in some loop.
 %
-% USAGE: [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt)
+% Important: Stimuli without a figure is specified by setting
+% stimopt.figureCoh (figure coherence) to 0.
 %
 % Input:
 % stimopt       - struct containing stimulus parameters (both for 
@@ -91,14 +94,19 @@ onsetRamp = sin(linspace(0, 1, numberOfOnsetSamples) * pi / 2);
 onsetOffsetRamp = [onsetRamp, ones(1, numberOfSamples  - 2*numberOfOnsetSamples), fliplr(onsetRamp)];
 
 % setting figure random parameters for each stimulus if needed
-if isnan(stimopt.figureOnset)
-    % setting figure random parameters for each stimulus
-    figureIntervals = (round(stimopt.figureMinOnset/stimopt.chordDur) + 1):(round((stimopt.totalDur - stimopt.figureMinOnset)/stimopt.chordDur) - stimopt.figureDur + 1);
-    figureStartInterval = figureIntervals(randi([1, length(figureIntervals)], 1));
-    figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
-else
-    figureStartInterval = stimopt.figureOnset;
-    figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
+if stimopt.figureCoh ~= 0  % if there is a figure even
+    if isnan(stimopt.figureOnset)  % if random onset is requested
+        % setting figure random parameters for each stimulus
+        figureIntervals = (round(stimopt.figureMinOnset/stimopt.chordDur) + 1):(round((stimopt.totalDur - stimopt.figureMinOnset)/stimopt.chordDur) - stimopt.figureDur + 1);
+        figureStartInterval = figureIntervals(randi([1, length(figureIntervals)], 1));
+        figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
+    else  % else an offset was specified
+        figureStartInterval = stimopt.figureOnset;
+        figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
+    end
+elseif stimopt.figureCoh == 0  % if there is no figure
+    figureStartInterval = 0;
+    figureEndInterval = 0;
 end
     
 % initializing left and right speaker outputs
