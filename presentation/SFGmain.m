@@ -349,7 +349,7 @@ for block = startBlockNo:blockNo
     
     % fill a dynamic buffer with data for whole block
     % get trial index list for current block
-    trialList = trialIdx(blockIdx==startBlockNo);
+    trialList = trialIdx(blockIdx==block);
     if ~isequal(min(trialList), startTrialNo)
         error([char(10), 'First trial of target block and preset trial start index do not match!']);
     end
