@@ -66,7 +66,7 @@ disp(figValues);
 
 %% Create stimuli for each type
 
-% load baes params
+% load base params
 stimopt = SFGparams();
 % counter for stimuli folders created
 counter = 1;

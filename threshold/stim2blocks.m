@@ -1,31 +1,26 @@
-function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocksTraining(stimArrayFile, seqFeatures)
-%% Helper function sorting stimuli to training sequences
+function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocks(stimArrayFile, blockNo)
+%% Helper function sorting stimuli to blocks and trials
 %
-% USAGE: [blockIdx, stimTypes, stimTypeIdx, stimArray] = 
-%           stim2blocksTraining(stimArrayFile, seqFeatures=[5,6; 3,8; 4,4; 3,6; 3,4; 2,3])
+% USAGE: [blockIdx, stimTypes, stimTypeIdx, stimArray] = stim2blocks(stimArrayFile, blockNo)
 %
-% For training phase of stochastic figure-ground (SFG) experiment. 
-% The function examines the stimuli array for unique stimuli types and 
-% creates sequences containing the different types, as used for training. 
-% Returns block and trial indices for each stimulus.
+% For stochastic figure-ground (SFG) experiment. The function examines the
+% stimuli array for unique stimuli types and creates blocks containing
+% equal number of trials with each unique stimulus type. Returns block and
+% trial indices for each stimulus.
 %
 %
 % Inputs:
 % stimArrayFile - *.mat file with cell array "stimArray" containing all 
 %               stimuli + features (size: no. of stimuli X 11 columns)
-% seqFeatures   - Matrix with figure duration (column one) and coherence 
-%               values (column two). Each row specifies the duration and
-%               coherence values needed for sequence. Row index corresponds
-%               to sequence number. Defaults to the training settings used in
-%               Toth et al., 2016, EEG signatures accompanying...:
-%               [5,6; 3,8; 4,4; 3,6; 3,4; 2,3]
+% blockNo       - Number of blocks to sort trials into, integer between
+%               1-50
 %
 % Outputs:
 % blockIdx      - Numeric column vector with a block index for each
 %               stimulus in the stimuli array
-% stimTypes     - Matrix where each row corresponds to a unique stimulus 
+% stimTypes     - Matrix where each line corresponds to a unique stimulus 
 %               type in terms of figure duration, coherence level and 
-%               figure presence/absence. Its size is "no. of unique types" 
+%               figure presence/absence. Irs size is "no. of unique types" 
 %               X 3, with columns corresponding to duration, coherence and
 %               figure presence/absence
 % stimTypeIdx   - Numeric column vector with a stimulus type index for each
@@ -44,34 +39,25 @@ function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocksTr
 
 %% Input checks
 
-if ~ismember(nargin, [1 2])
-    error('Function needs mandatory input arg "stimArray" and optional arg "seqFeatures"!');
-end
-if nargin == 1
-    seqFeatures = [5,6; 3,8; 4,4; 3,6; 3,4; 2,3];
+if nargin ~= 2
+    error('Function needs input args "stimArray" and "blockNo"!');
 end
 % file with stimuli array
 if ~exist(stimArrayFile, 'file')
     error('Cannot find input arg "stimArrayFile"!');
 end
-% number of sequences
-if ~ismembertol(size(seqFeatures, 1), [1:50])
-    error('Number of training sequences should be between 1 - 50!');
+% number of blocks
+if ~ismembertol(blockNo, 1:50)
+    error('Input arg "blockNo" should be between 1 - 50!');
 end
 
 % user message
-disp([char(10), 'Called stim2blocksTraining with input args: ',...
+disp([char(10), 'Called stim2blocks with input args: ',...
     char(10), 'stimArrayFile:', stimArrayFile,...
-    char(10), 'seqFeatures: ']);
-disp({'figureDuration', 'figureCoherence'});
-disp(num2str(seqFeatures));
+    char(10), 'blockNo: ', num2str(blockNo)]);
 
 
 %% Loading stimuli, sanity checks
-
-% number of stimulus blocks = number of training sequences = rows of
-% seqFeatures
-blockNo = size(seqFeatures, 1);
 
 %%%%%% HARD-CODED VALUES %%%%%
 % number of expected cell columns for the stimuli array
@@ -91,12 +77,12 @@ trialNo = size(stimArray, 1);
 % sanity check - trials/blocks == integer?
 if mod(trialNo/blockNo, 1) ~= 0
     error(['Number of trials (', num2str(trialNo), ', based on stimuli',... 
-        'array) is incompatible with the number of sequences (', num2str(blockNo), ') requested']);
+        'array) is incompatible with the number of blocks (', num2str(blockNo), ') requested']);
 end
 
 % user message
 disp([char(10), 'Loaded stimuli array, found ', num2str(trialNo), ' trials, ',...
-    char(10), 'each stimulus block (=training sequence) will contain ', num2str(trialNo/blockNo), ' trials']);
+    char(10), 'each block will contain ', num2str(trialNo/blockNo), ' trials']);
 
 
 %% Get unique stimulus types
@@ -134,23 +120,20 @@ if length(unique(stimTypesNumbers)) ~= 1
     error('There are different numbers of trials for different trial types!');
 else
     stimNoPerType = unique(stimTypesNumbers);
-    disp([char(10), 'There are ', num2str(stimNoPerType), ' trials for each trial type']);
+    stimNoPerTypePerBlock = unique(stimTypesNumbers)/blockNo;
+    disp([char(10), 'There are ', num2str(stimNoPerType), ' trials for each trial type, ',...
+        char(10), 'corresponding to ', num2str(stimNoPerTypePerBlock), ' trials for each type per block']);
 end
 
 
 %% Sort stimuli into blocks
 
-% split trials into blocks according to seqFeatures
+% split trials into blocks, with equal number of trials per type per block
 blockIdx = nan(trialNo, 1); % block index for each stimulus
-for seq = 1:blockNo
-    % which unique trial types correspond to the features of the current sequence
-    idx = find(ismember(stimTypes(:, 1:2), seqFeatures(seq,:),'rows'));
-    % go through the unique trial types corresponding to sequence
-    for t = idx'
-        % assign the right block (=sequence) number to stimuli with the
-        % current stimulus type
-        blockIdx(stimTypeIdx==t) = seq;
-    end
+for i = 1:size(stimTypes, 1)
+    typeBlockIdx = repmat(1:blockNo, [1, stimNoPerTypePerBlock]);  % init block indices array
+    typeBlockIdx = typeBlockIdx(randperm(length(typeBlockIdx)));  % permute its values
+    blockIdx(stimTypeIdx==i) = typeBlockIdx;  % assign block indices to stimuli corresponding to current type
 end
 
 % user message
@@ -159,20 +142,14 @@ disp([char(10), 'Sorted stimuli into blocks, with equal number of trials per typ
 
 %% Get exact trial indices for stimuli, return
 
-% expected number of stimuli per block
-stimNoPerBlock = trialNo/blockNo;
+% number of stimuli per block
+stimNoPerBlock = size(stimTypes, 1)*stimNoPerTypePerBlock;
 % init a trial indices column vector
 trialIdx = zeros(trialNo, 1);
 
 % go through each block and generate trial indices for corresponding
 % stimuli
 for block = 1:blockNo
-    % check if we have the expected number of trials
-    if ~isequal(sum(blockIdx==block), stimNoPerBlock)
-        error(['There are ', num2str(sum(blockIdx==block)),... 
-            ' trials for block ', num2str(block), ' instead of ',... 
-            num2str(stimNoPerBlock), ', investigate!']);
-    end
     % trial indices for given block, in order
     trialIdxForBlock = [(block-1)*stimNoPerBlock+1:block*stimNoPerBlock]; 
     % randomizing trial indices for given block
