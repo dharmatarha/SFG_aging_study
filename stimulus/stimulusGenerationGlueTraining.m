@@ -93,7 +93,7 @@ for c = 1:length(cohValues)
         % loop over figure onsets
         for o = 1:length(figOnsets)
             % change params accordingly
-            stimopt.figureOnsets = figOnsets(o);
+            stimopt.figureOnset = figOnsets(o);
             
             % generate stimuli
             stimTypeDirs{counter} = createSFGstimuli(trialNo, stimopt);
