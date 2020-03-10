@@ -29,7 +29,8 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 % toneFreqSetL, figureDur, figureCoh, figureStepS
 %
 % NOTES:
-% (1) Typical stimopt struct:
+% (1) Use plotChordsSingleStim.m for checking the generated stimulus. 
+% (2) Typical stimopt struct:
 % stimopt = struct( ...
 %     'totalDur', 2, ...
 %     'chordDur', 0.05, ...
@@ -45,10 +46,10 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 %     'figureStepS', -2, ...
 %     'sampleFreq', 44100, ...
 %     'randomSeed', 'some seed here');
-% (2) On our lab machines it should reliably run in ~50 ms, taking 
+% (3) On our lab machines it should reliably run in ~50 ms, taking 
 %   slightly longer on occasion. Allocating 100 ms should be more than
 %   enough when used in a trial loop generating its own stimuli.
-% (3) As this script is intended to be used in experimental scripts
+% (4) As this script is intended to be used in experimental scripts
 % generating stimuli on the fly, there are no user messages printed to the
 % command window (unlike in createSFGstimuli.m).
 %
