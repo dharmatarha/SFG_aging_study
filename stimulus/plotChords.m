@@ -1,6 +1,8 @@
 function plotChords(folder, wavN)
 %% Plot background + figure chords for SFG stimulus
 %
+% USAGE: plotChords(folder, wavN)
+%
 % Reads in and plots a given SFG stimulus, both in terms of the frequency
 % components as described in the parameter files and in terms of the
 % spectrogram. Assumes that wav files were generated with
@@ -36,7 +38,8 @@ disp([char(10), 'Called function plotChords with inputs: ', char(10),...
 %% Basics, load params and audio
 
 % load params
-T = readtable([folder, '/', folder, '-StimuliData.csv'], 'Delimiter', ',');
+fileParts = regexp(folder,filesep,'split');
+T = readtable([folder, '/', fileParts{end}, '-StimuliData.csv'], 'Delimiter', ',');
 % extract filename
 if wavN > size(T, 1)
     error('Input arg "wavN" exceeds number of wav files in supplied "folder"!');
@@ -58,7 +61,7 @@ figStart = T(wavN, :).figureStartInterval;  % figure start time in chords
 figEnd = T(wavN, :).figureEndInterval;  % last figure element in chords
 
 % load detailed chord information
-chordF = [folder, '/', folder, '_chordInfo.mat'];
+chordF = [folder, '/', fileParts{end}, '_chordInfo.mat'];
 load(chordF);
 % chord info for given stimulus
 backgChords = allBackgrFreqs(wavN, :);
@@ -66,7 +69,7 @@ figChords = allFigFreqs(wavN, :);
 chordN = size(backgChords, 2);
 
 % check stimulus generation options for the frequency range used
-stimoptF = [folder, '/', folder, '_stimopt.mat'];
+stimoptF = [folder, '/', fileParts{end}, '_stimopt.mat'];
 load(stimoptF);
 freqLimits = [stimopt.toneFreqMin, stimopt.toneFreqMax];
 maxSize = max(stimopt.toneComp);
