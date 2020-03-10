@@ -142,14 +142,19 @@ allFigFreqs = cell(NStimuli, stimulusChordNumber);
 for stimNo = 1:NStimuli
 
     % setting figure random parameters for each stimulus if needed
-    if isnan(stimopt.figureOnset)
-        % setting figure random parameters for each stimulus
-        figureIntervals = (round(stimopt.figureMinOnset/stimopt.chordDur) + 1):(round((stimopt.totalDur - stimopt.figureMinOnset)/stimopt.chordDur) - stimopt.figureDur + 1);
-        figureStartInterval = figureIntervals(randi([1, length(figureIntervals)], 1));
-        figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
-    else
-        figureStartInterval = stimopt.figureOnset;
-        figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
+    if stimopt.figureCoh ~= 0  % if there is a figure even
+        if isnan(stimopt.figureOnset)  % if random onset is requested
+            % setting figure random parameters for each stimulus
+            figureIntervals = (round(stimopt.figureMinOnset/stimopt.chordDur) + 1):(round((stimopt.totalDur - stimopt.figureMinOnset)/stimopt.chordDur) - stimopt.figureDur + 1);
+            figureStartInterval = figureIntervals(randi([1, length(figureIntervals)], 1));
+            figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
+        else  % else an offset was specified
+            figureStartInterval = stimopt.figureOnset;
+            figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
+        end
+    elseif stimopt.figureCoh == 0  % if there is no figure
+        figureStartInterval = 0;
+        figureEndInterval = 0;
     end
     
     % select starting freqs

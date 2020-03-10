@@ -47,7 +47,7 @@ id = strcat(date, '-', num2str(c(4)), num2str(c(5)));
 stimDirName = ['stimulusTypes-', id];
 mkdir(stimDirName);
 % file for saving final cell array containing all stimuli
-saveF = ['stimArray-', id, '.mat'];
+saveF = ['stimArrayTraining-', id, '.mat'];
 
 % figure coherence level values
 cohValues = [10, 9, 8, 7, 6, 5];

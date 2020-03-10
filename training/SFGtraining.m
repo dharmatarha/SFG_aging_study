@@ -32,9 +32,9 @@ function SFGtraining(subNum, stimArrayFile)
 % initialization + the audio parameters code block for details
 % (4) Logging (result) variable columns: 
 % logHeader={'subNum', 'blockNo', 'trialNo', 'stimNo', 'figDuration',... 
-%     'figCoherence', 'figPresence', 'figStartChord', 'figEndChord',... 
-%     'accuracy', 'buttonResponse', 'respTime', 'iti', 'trialStart',... 
-%     'soundOnset', 'figureStart', 'respIntervalStart', 'trigger'};
+%     'figCoherence', 'figPresence', 'figStartChord', 'figEndChord', 'figStepS',... 
+%     'accuracy', 'buttonResponse', 'respTime', 'iti', 'trialStart', 'soundOnset',... 
+%     'figureStart', 'respIntervalStart', 'trigger'};
 %
 %
 
@@ -82,9 +82,6 @@ stimArray = [stimArray, num2cell(stimTypeIdx), num2cell(blockIdx), num2cell(tria
 % sort into trial order
 [stimArray, sortIndices] = sortrows(stimArray, size(stimArray, 2));
 
-% pre-set starting variables to defaults
-startTrialNo = 1; startBlockNo = 1;
-
 % subject folder name
 dirN = ['subject', num2str(subNum)];
 % check if subject folder already exists, create if necessary
@@ -103,9 +100,9 @@ subLogF = [dirN, '/training_sub', num2str(subNum), 'Log_', timestamp{1}, '.mat']
 disp([char(10), 'Initializing a logging variable']);
 % log header
 logHeader={'subNum', 'blockNo', 'trialNo', 'stimNo', 'figDuration',... 
-    'figCoherence', 'figPresence', 'figStartChord', 'figEndChord',... 
-    'accuracy', 'buttonResponse', 'respTime', 'iti', 'trialStart',... 
-    'soundOnset', 'figureStart', 'respIntervalStart', 'trigger'};
+    'figCoherence', 'figPresence', 'figStartChord', 'figEndChord', 'figStepS',... 
+    'accuracy', 'buttonResponse', 'respTime', 'iti', 'trialStart', 'soundOnset',... 
+    'figureStart', 'respIntervalStart', 'trigger'};
 % empty cell array, insert header
 logVar = cell(size(stimArray, 1)+1, size(logHeader, 2));
 logVar(1, :) = logHeader;
@@ -114,11 +111,12 @@ logVar(2:end, strcmp(logHeader, 'subNum')) = num2cell(repmat(subNum, [size(stimA
 logVar(2:end, strcmp(logHeader, 'blockNo')) = stimArray(:, 13);  % blockNo
 logVar(2:end, strcmp(logHeader, 'trialNo')) = stimArray(:, 14);  % trialNo
 logVar(2:end, strcmp(logHeader, 'stimNo')) = num2cell(sortIndices);  % stimNo - original stimArray row numbers (ie. stimulus numbers) before applying sortrows
-logVar(2:end, strcmp(logHeader, 'figDuration')) = stimArray(:, 6);  % figure duration in chords
-logVar(2:end, strcmp(logHeader, 'figCoherence')) = stimArray(:, 7);  % figure coherence in chords
-logVar(2:end, strcmp(logHeader, 'figPresence')) = num2cell(strcmp(stimArray(:, 5), 'yes'));  % figure presence/absence
+logVar(2:end, strcmp(logHeader, 'figDuration')) = stimArray(:, 5);  % figure duration in chords
+logVar(2:end, strcmp(logHeader, 'figCoherence')) = stimArray(:, 6);  % figure coherence in chords
+logVar(2:end, strcmp(logHeader, 'figPresence')) = num2cell(cell2mat(stimArray(:, 6))~=0);  % figure presence/absence
 logVar(2:end, strcmp(logHeader, 'figStartChord')) = stimArray(:, 9);  % figure start in terms of chords
 logVar(2:end, strcmp(logHeader, 'figEndChord')) = stimArray(:, 10);  % figure start in terms of chords
+logVar(2:end, strcmp(logHeader, 'figStepS')) = stimArray(:, 7);  % figure start in terms of chords
 
 % user message
 disp([char(10), 'Ready to start the experiment']);
@@ -167,7 +165,7 @@ disp([char(10), 'Set audio parameters']);
 
 % get figure presence/absence variable for stimuli
 figStim = cell2mat(logVar(2:end, strcmp(logHeader, 'figPresence')));
-% figure / added noise start and end time in terms of chords
+% figure start and end time in terms of chords
 figStartCord = cell2mat(stimArray(:, 9));
 
 % we check the length of stimuli + sanity check
@@ -301,12 +299,12 @@ Screen('DrawText', qMarkWin, '?', xCenter-15, yCenter-15, textColor);
 okRespWin = Screen('OpenOffscreenWindow', win, backGroundColor, rect);
 Screen('BlendFunction', okRespWin, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 Screen('TextSize', okRespWin, 26);
-Screen('DrawText', okRespWin, 'Jó válasz!', xCenter-40, yCenter-15, textColor);
+Screen('DrawText', okRespWin, 'Jó válasz!', xCenter-50, yCenter-15, textColor);
 % set up "incorrect" feedback screen
 badRespWin = Screen('OpenOffscreenWindow', win, backGroundColor, rect);
 Screen('BlendFunction', badRespWin, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 Screen('TextSize', badRespWin, 26);
-Screen('DrawText', badRespWin, 'Nem jó válasz!', xCenter-40, yCenter-15, textColor);
+Screen('DrawText', badRespWin, 'Nem jó válasz!', xCenter-70, yCenter-15, textColor);
 
 % open PsychPortAudio device for playback
 pahandle = PsychPortAudio('Open', device, mode, reqLatencyClass, fs, nrChannels);
@@ -414,10 +412,7 @@ for block = startBlockNo:blockNo
     
     % fill a dynamic buffer with data for whole block
     % get trial index list for current block
-    trialList = trialIdx(blockIdx==startBlockNo);
-    if ~isequal(min(trialList), startTrialNo)
-        error([char(10), 'First trial of target block and preset trial start index do not match!']);
-    end
+    trialList = trialIdx(blockIdx==block);
     buffer = [];
     for trial = min(trialList):max(trialList)
         audioData = stimArray{trial, 11};
@@ -561,8 +556,7 @@ for block = startBlockNo:blockNo
         end
         Screen('DrawingFinished', win);
         Screen('Flip', win);
-        
-        
+                
         % user messages
         if figDetect(trial) == 1
             disp('Subject detected a figure');    
@@ -587,7 +581,7 @@ for block = startBlockNo:blockNo
         disp(['Overall accuraccy in block so far is ', num2str(blockAcc), '%']);
         
         % accumulating all results in logging / results variable
-        logVar(trial+1, 10:end-1) = {acc(trial), figDetect(trial),... 
+        logVar(trial+1, 11:end-1) = {acc(trial), figDetect(trial),... 
             respTime(trial), iti(trial),...
             trialStart, startTime-trialStart,... 
             (figStartCord(trial)-1)*chordLength,... 
@@ -650,7 +644,9 @@ for block = startBlockNo:blockNo
         disp([char(10), 'The task has ended!!!']);
         
         % block ending text
-        blockEndText = ['Vége a feladatnak, köszönjük a részvételt!'];       
+        blockEndText = ['Vége a feladatnak! \n\n',...
+            'Az utolsó blokkban a próbák ', num2str(round(blockAcc, 2)), '%-ra adott helyes választ.\n\n',... 
+            'Köszönjük a részvételt!'];       
         % uniform background
         Screen('FillRect', win, backGroundColor);
         % draw block-starting text
@@ -659,7 +655,7 @@ for block = startBlockNo:blockNo
         
         WaitSecs(5);
         
-    end        
+    end  % if loop blockNo       
             
 end  % block for loop
     
