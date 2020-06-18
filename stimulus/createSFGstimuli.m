@@ -15,18 +15,30 @@ function wavDir = createSFGstimuli(NStimuli, stimopt)
 % (dd-mm-yyyy-hh-mm-chordInfo.mat) in the same folder.
 %
 % Inputs:
-% NStimuli      - number of stimuli to be generated
-% stimopt       - struct containing stimulus parameters (both for 
+% NStimuli      - Numerical value, number of stimuli to be generated
+% stimopt       - Struct containing stimulus parameters (both for 
 %               background and figure). The list of fields required is
 %               below, for details see SFGparams.m
 %
 % Outputs:
 % wavDir        - name of the folder with the generated stimuli
 %
-% Fields of stimopt struct:
-% sampleFreq, chordOnset, chordDur, figureMinOnset, figureOnset, 
-% totalDur, toneComp, toneFreqMax, toneFreqMin, 
-% toneFreqSetL, figureDur, figureCoh, figureStepS
+% Fields of stimopt struct with typical values:
+% stimopt = struct( ...
+%     'totalDur', 2, ...
+%     'chordDur', 0.05, ...
+%     'toneComp', 24, ...
+%     'toneFreqSetL', 129, ...
+%     'toneFreqMin', 179, ...
+%     'toneFreqMax', 7246, ...
+%     'chordOnset', 0.01, ...
+%     'figureDur', 12, ...
+%     'figureCoh', 4, ...
+%     'figureMinOnset', 0.3, ...
+%     'figureOnset', nan,...
+%     'figureStepS', -2, ...
+%     'sampleFreq', 44100, ...
+%     'randomSeed', 'some seed here');
 %
 % Based on earlier scripts by Tamas Kurics, Zsuzsanna Kocsis and Botond 
 % Hajdu, ex-members of the lab.
@@ -42,12 +54,11 @@ function wavDir = createSFGstimuli(NStimuli, stimopt)
 %% Input checks, loading params
 
 if nargin ~= 2
-    wavDir = 0;
     error('Function createSFGstimuli requires input args "NStimuli" and "stimopt"!');
 end
 % sanity check for requested no. of stimuli
 if ~ismembertol(NStimuli, 1:1000)
-    error('Input arg NStimuli should be element of 1:1000, please double-check and edit the function if necessary!');
+    error('Input arg NStimuli should be one of 1:1000, please double-check and edit the function if necessary!');
 end
 % minimal checks on stimopt arg
 if ~isstruct(stimopt) || isempty(stimopt)
@@ -68,12 +79,8 @@ if isfield(stimopt, 'randomSeed')
     rng(stimopt.randomSeed); 
 end
 
-% if there is no value in stimopt.figureOnset, set it to nan
-if isempty(stimopt.figureOnset)
-    stimopt.figureOnset = nan;
-end
 % check the range of figureOnset
-if stimopt.figureOnset < ceil(stimopt.figureMinOnset/stimopt.chordDur)
+if stimopt.figureOnset < ceil(stimopt.figureMinOnset/stimopt.chordDur)  % comparison with NaN value gives 0 (False)
     error('The supplied figure onset value is below the minimum onset value!');
 end
 
