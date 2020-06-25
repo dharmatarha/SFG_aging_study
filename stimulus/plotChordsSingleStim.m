@@ -116,7 +116,7 @@ line(linX, linY, 'Color', 'w', 'LineWidth', 2);
 markerX = [(figStart-0.5)*dur/chordN:dur/chordN:(figEnd-0.5)*dur/chordN];
 markerFreqs = allFigFreqs';
 markerFreqs(isnan(markerFreqs)) = 0;
-markerFreqs(ismember(markerFreqs, zeros(1,4), 'rows'), :) = [];
+markerFreqs(ismember(markerFreqs, zeros(1, size(markerFreqs, 2)), 'rows'), :) = [];
 plot(markerX, markerFreqs/1000, 'wx', 'LineWidth', 2, 'MarkerSize',12);  % emphasize figure frequency components
 % subplot details
 title('Spectrogram of SFG stimulus');

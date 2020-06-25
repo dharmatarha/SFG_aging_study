@@ -16,8 +16,8 @@ function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocksTr
 % seqFeatures   - Matrix with figure duration (column one) and coherence 
 %               values (column two). Each row specifies the duration and
 %               coherence values needed for sequence. Row index corresponds
-%               to sequence number. Aim is to imitate the training setup used in
-%               Toth et al., 2016, EEG signatures accompanying...
+%               to sequence number. Aim is to imitate the training setup
+%               used in (Toth et al., 2016, EEG signatures accompanying...)
 %               Defaults to [10,10; 10,9; 10,8; 10,7; 10,6; 10,5]    
 %               
 %

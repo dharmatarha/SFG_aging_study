@@ -19,10 +19,10 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 % Outputs:
 % soundOutput       - Numeric matrix corresponding to the audio stimulus.
 %                   Its size is 2 X samples, with the two channels being 
-%                   identical 
+%                   identical
 % allFigFreqs       - Numeric matrix containing the frequencies used for 
-%                   figure contruction. Its size is Coherence level X 
-%                   no. of chords
+%                   figure contruction. Its size is 
+%                   stimopt.figureCoh (coherence level) X no. of chords
 % allBackgrFreqs    - Numeric matrix containing the frequencies used for
 %                   background contruction. Its size is no. of tone 
 %                   components X no. of chords
@@ -45,7 +45,8 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 %     'chordOnset', 0.01, ...
 %     'figureDur', 12, ...
 %     'figureCoh', 4, ...
-%     'figureOnset', 0.2, ...
+%     'figureMinOnset', 0.3, ...
+%     'figureOnset', nan,...
 %     'figureStepS', -2, ...
 %     'sampleFreq', 44100, ...
 %     'randomSeed', 'some seed here');
@@ -95,14 +96,21 @@ onsetOffsetRamp = [onsetRamp, ones(1, numberOfSamples  - 2*numberOfOnsetSamples)
 
 % setting figure random parameters for each stimulus if needed
 if stimopt.figureCoh ~= 0  % if there is a figure even
+    % get vector of possible figure onset times given stimopt.figureMinOnset
+    figureIntervals = (round(stimopt.figureMinOnset/stimopt.chordDur) + 1):(round((stimopt.totalDur - stimopt.figureMinOnset)/stimopt.chordDur) - stimopt.figureDur + 1);
     if isnan(stimopt.figureOnset)  % if random onset is requested
-        % setting figure random parameters for each stimulus
+        % setting random figure start/end parameters
         figureIntervals = (round(stimopt.figureMinOnset/stimopt.chordDur) + 1):(round((stimopt.totalDur - stimopt.figureMinOnset)/stimopt.chordDur) - stimopt.figureDur + 1);
         figureStartInterval = figureIntervals(randi([1, length(figureIntervals)], 1));
         figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
     else  % else an offset was specified
-        figureStartInterval = stimopt.figureOnset;
-        figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
+        % sanity check: is the onset in the allowed range?
+        if ~ismember(stimopt.figureOnset, figureIntervals)
+            error('Received incompatible figureOnset and figureMinOnset fields in stimopt!')
+        else
+            figureStartInterval = stimopt.figureOnset;
+            figureEndInterval   = figureStartInterval + stimopt.figureDur - 1;
+        end
     end
 elseif stimopt.figureCoh == 0  % if there is no figure
     figureStartInterval = 0;
