@@ -1,7 +1,7 @@
-function q = SFGthreshold(subNum, stimopt, trialMax)
+function q = SFGthreshold1(subNum, stimopt, trialMax)
 %% Quest threshold for SFG stimuli aimed at estimating the effect of coherence
 %
-% USAGE: SFGthreshold(subNum, stimopt=SFGparams, trialMax=80)
+% USAGE: SFGthreshold1(subNum, stimopt=SFGparams, trialMax=80)
 %
 % The procedure changes the coherence level using the adaptive staircase
 % procedure QUEST. Fixed trial approach. The function returns the Quest

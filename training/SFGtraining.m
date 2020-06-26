@@ -9,10 +9,8 @@ function SFGtraining(subNum, stimArrayFile)
 % "stimArrayFile". See the functions in /stimulus for details on producing
 % stimuli. 
 %
-% The script also requires stim2blocks.m for sorting stimuli into blocks
-% and expParamsHandler.m for handling the loading of stimuli and existing
-% parameters/settings, and also for detecting and handling earlier sessions 
-% by the same subject (for multi-session experiment).
+% The script also requires stim2blocksTraining.m for sorting stimuli into
+% blocks.
 %
 % Inputs:
 % subNum        - Subject number, integer between 1-999
@@ -367,7 +365,7 @@ DrawFormattedText(win, instrText, 'center', 'center', textColor);
 Screen('Flip', win);
 
 % user message
-disp([char(10), 'Showing the instructions text right now...']);
+disp([char(10), 'Showing the instructions right now...']);
 
 % wait for key press to start
 while 1
@@ -389,7 +387,7 @@ if abortFlag
     RestrictKeysForKbCheck([]);
     PsychPortAudio('Close');
     Screen('CloseAll');
-    ShowCursor(screenNumber);startTime = PsychPortAudio('Start', pahandle, 1, trialStart+iti(trial), 1);
+    ShowCursor(screenNumber);
     return;
 end
 
