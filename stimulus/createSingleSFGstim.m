@@ -73,9 +73,12 @@ end
 
 %% Settings
 
-% set random number generator if random seed was supplied
+% set random number generator if random seed was supplied and is a valid
+% value
 if isfield(stimopt, 'randomSeed')
-    rng(stimopt.randomSeed); 
+    if ~isempty(stimopt.randomSeed) && isnumeric(stimopt.randomSeed)
+        rng(stimopt.randomSeed); 
+    end
 end
 
 % generating logarithmically uniform frequency range for the random

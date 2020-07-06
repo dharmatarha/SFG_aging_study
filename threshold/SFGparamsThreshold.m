@@ -1,7 +1,7 @@
-function stimopt = SFGparams()
+function stimopt = SFGparamsThreshold()
 % Set parameters for random figure generation with createSFGstimuli.m 
 %
-% USAGE: stimopt = SFGparams()
+% USAGE: stimopt = SFGparamsThreshold()
 %
 % totalDur         - Numeric value, total length of the whole stimulus (sec)
 % chordDur         - Numeric value, length of any individual chord (sec)
@@ -36,10 +36,14 @@ function stimopt = SFGparams()
 % Based on scripts of: Tamas Kurics, Zsuzsanna Kocsis and Botond Hajdu
 % date: 2020
 
-        
-% get a seed for the random number generator, as part of the current param
-% set
-c = clock; seed = round(sum(c));
+% For measuring thresholds we generate stimuli on the fly but only call 
+% the params function once. Thus, it is better to ommit setting the 
+% random seed as it could lead to repeating the same stimuli over and over 
+% again.         
+% (Get a seed for the random number generator, as part of the current param
+% set)
+% c = clock; seed = round(sum(c));
+seed = [];
 
 % fields = parameter values
 stimopt = struct( ...

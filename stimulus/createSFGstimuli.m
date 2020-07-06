@@ -76,7 +76,9 @@ disp(stimopt);
 
 % set random number generator if random seed was supplied
 if isfield(stimopt, 'randomSeed')
-    rng(stimopt.randomSeed); 
+    if ~isempty(stimopt.randomSeed) && isnumeric(stimopt.randomSeed)
+        rng(stimopt.randomSeed); 
+    end
 end
 
 % check the range of figureOnset
