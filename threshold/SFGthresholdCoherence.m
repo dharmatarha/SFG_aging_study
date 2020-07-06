@@ -1,13 +1,17 @@
-function q = SFGthreshold1(subNum, stimopt, trialMax)
+function q = SFGthresholdCoherence(subNum, varargin)
 %% Quest threshold for SFG stimuli aimed at estimating the effect of coherence
 %
-% USAGE: SFGthreshold1(subNum, stimopt=SFGparams, trialMax=80)
+% USAGE: SFGthresholdCoherence(subNum, stimopt=SFGparams, trialMax=80)
 %
 % The procedure changes the coherence level using the adaptive staircase
 % procedure QUEST. Fixed trial approach. The function returns the Quest
-% object ("q") and also saves it out to the folder of the subject.
+% object ("q") and also saves it out to the folder of the subject. The
+% subject's folder is created in the current working directory if it does
+% not exist.
 %
-% IMPORTANT: INITIAL QUEST PARAMETERS ARE HARDCODED
+% IMPORTANT: INITIAL QUEST PARAMETERS AND PSYCHTOOLBOX SETTINGS ARE 
+% HARDCODED! Specific settings are for Mordor / Gondor labs of RCNS,
+% Budapest.
 %
 % Mandatory input:
 % subNum        - Numeric value, subject number. One of 1:999.
@@ -15,13 +19,14 @@ function q = SFGthreshold1(subNum, stimopt, trialMax)
 % Optional inputs:
 % stimopt       - Struct containing the base parameters for SFG stimulus. 
 %               Passed to createSingleSFGstim for generating stimuli. See
-%               SFGparams.m for details. Defaults to calling SFGparams.m
+%               SFGparamsThreshold.m for details. Defaults to calling 
+%               SFGparamsThreshold.m
 % trialMax      - Numeric value, number of trials used for staircase
-%               procedure, one of 10:120. Defaults to 60.
+%               procedure, one of 10:120. Defaults to 80.
 %
 %
 % Output:
-% q             - Quest object
+% q             - Quest object.
 %
 % NOTES:
 % (1) We need to implement inner checks on the robustness of the estimate.
@@ -30,22 +35,35 @@ function q = SFGthreshold1(subNum, stimopt, trialMax)
 %
 %
 
+
 %% Input checks
 
+% chcek no. of args
 if ~ismember(nargin, 1:3) 
     error('Function SFGthreshold needs mandatory input arg "subNum" and optional args "stimopt" and "trialMax"!');
 end
-% check for trialMax
-if nargin < 3
-    trialMax = 80;
-elseif ~ismembertol(trialMax, 10:120)
-    error('Input arg "trialMax" should be one of 10:120!');
+% check mandatory input arg
+if ~ismembertol(subNum, 1:999)
+    error('Input arg "subNum" should be one of 1:999!');
 end
-% check for stimopt    
-if nargin < 2
-    stimopt = SFGparams();
-elseif ~isstruct(stimopt)
-    error('Input arg "stimopt" is expected to be a struct!');
+% check optional input args
+if ~isempty(varargin)
+    for v = 1:length(varargin)
+        if isstruct(varargin{v}) && ~exist('stimopt', 'var')
+            stimopt = varargin{v};
+        elseif isnumeric(varargin{v}) && ismembertol(varargin{v}, 10:120) && ~exist('trialMax', 'var')
+            trialMax = varargin{v};
+        else
+            error('An input arg could not be mapped nicely to "stimopt" or "trialMax"!');
+        end
+    end
+end
+% default values to optional args
+if ~exist('stimopt', 'var')
+    stimopt = SFGparamsThreshold();
+end
+if ~exist('trialMax', 'var')
+    trialMax = 80;
 end
 
 % user message
@@ -71,9 +89,9 @@ end
 c = clock; d = date;
 timestamp = {[d, '-', num2str(c(4)), num2str(c(5))]};
 % subject log file for training
-saveF = [dirN, '/threshold1_sub', num2str(subNum), '_', timestamp{1}, '.mat'];
+saveF = [dirN, '/thresholdCoherence_sub', num2str(subNum), '_', timestamp{1}, '.mat'];
 
-disp([char(10), 'Got output file path']);
+disp([char(10), 'Got output file path: ', saveF]);
 
 
 %% Basic settings for Quest
@@ -89,7 +107,7 @@ snrLogLevels = log(snrLevels);
 
 % settings for quest 
 qopt = struct;
-qopt.tGuess = -0.8;  % prior threshold guess, 0.8 equals an SNR of ~0.43
+qopt.tGuess = -0.85;  % prior threshold guess, 0.85 equals an SNR of ~0.43 (=coherence level of 6)
 qopt.tGuessSd = 5;  % SD of prior guess
 qopt.pThreshold = 0.7;  % threshold of interest
 qopt.beta = 3.5;  % Weibull steepness, 3.5 is the default used for a wide range of stimuli 

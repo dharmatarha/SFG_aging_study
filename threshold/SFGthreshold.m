@@ -43,7 +43,7 @@ elseif ~ismembertol(trialMax, 10:120)
 end
 % check for stimopt    
 if nargin < 2
-    stimopt = SFGparams();
+    stimopt = SFGparamsThreshold();
 elseif ~isstruct(stimopt)
     error('Input arg "stimopt" is expected to be a struct!');
 end
