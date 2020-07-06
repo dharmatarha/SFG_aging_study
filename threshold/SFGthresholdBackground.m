@@ -1,13 +1,14 @@
-function SFGthresholdCoherence(subNum, varargin)
-%% Quest threshold for SFG stimuli aimed at estimating the effect of coherence
+function q = SFGthresholdBackground(subNum, stimopt, trialMax)
+%% Quest threshold for SFG stimuli aimed at estimating the effect of background notes
 %
-% USAGE: SFGthresholdCoherence(subNum, stimopt=SFGparams, trialMax=80)
+% USAGE: SFGthresholdBackground(subNum, stimopt=SFGparams, trialMax=80)
 %
-% The procedure changes the coherence level using the adaptive staircase
+% The procedure changes the number of background tones using the adaptive staircase
 % procedure QUEST. Fixed trial approach. The function returns the Quest
-% object ("q") and also saves it out to the folder of the subject. The
-% subject's folder is created in the current working directory if it does
-% not exist.
+% object ("q") and also saves it out to the folder of the subject. 
+%
+% Expects subject's folder to already exist and contain the results /
+% output from SFGthresholdCoherence.m
 %
 % IMPORTANT: INITIAL QUEST PARAMETERS AND PSYCHTOOLBOX SETTINGS ARE 
 % HARDCODED! Specific settings are for Mordor / Gondor labs of RCNS,
@@ -34,7 +35,6 @@ function SFGthresholdCoherence(subNum, varargin)
 % off.
 %
 %
-
 
 %% Input checks
 
@@ -78,20 +78,31 @@ disp(stimopt);
 
 % subject folder name
 dirN = ['subject', num2str(subNum)];
-% check if subject folder already exists, create if necessary
+
+% check if subject folder already exists, complain if not
 if ~exist(dirN, 'dir')
-    % create a folder for subject if there was none
-    mkdir(dirN);
-    disp([char(10), 'Created folder for subject at ', dirN]);
+    error(['Could not find subject''s folder at ', dirN,...
+        'SFGthresholdBackground requires the results from ',...
+        'SFGthresholdCoherence to be saved to subject''s folder!']);
 end
 
 % date and time of starting with a subject
 c = clock; d = date;
 timestamp = {[d, '-', num2str(c(4)), num2str(c(5))]};
 % subject log file for training
-saveF = [dirN, '/thresholdCoherence_sub', num2str(subNum), '_', timestamp{1}, '.mat'];
+saveF = [dirN, '/thresholdBackground_sub', num2str(subNum), '_', timestamp{1}, '.mat'];
 
 disp([char(10), 'Got output file path: ', saveF]);
+
+
+%% Load results from SFGthresholdCoherence
+
+% get file name - exact file name contains unknown time stamp
+cohResFile = dir([dirN, '/thresholdCoherence_sub', num2str(subNum), '*.mat']);
+cohResFilePath = [cohResFile.folder, '/', cohResFile.name];
+
+% load results from coherence-thresholding
+cohRes = load(cohResFilePath);
 
 
 %% Basic settings for Quest
@@ -107,7 +118,7 @@ snrLogLevels = log(snrLevels);
 
 % settings for quest 
 qopt = struct;
-qopt.tGuess = -0.85;  % prior threshold guess, 0.85 equals an SNR of ~0.43 (=coherence level of 6)
+qopt.tGuess = -0.8;  % prior threshold guess, 0.8 equals an SNR of ~0.43
 qopt.tGuessSd = 5;  % SD of prior guess
 qopt.pThreshold = 0.7;  % threshold of interest
 qopt.beta = 3.5;  % Weibull steepness, 3.5 is the default used for a wide range of stimuli 
@@ -500,26 +511,11 @@ for trialN = 1:trialMax
     
     % save logging/results variable
     save(saveF, 'q', 'respTime', 'figDetect', 'acc', 'trialType',... 
-        'trialMax', 'stimopt', 'qopt', 'cohLevels', 'snrLogLevels',... 
-        'snrLevels');
+        'trialMax', 'stimopt', 'qopt', 'cohLevels', 'snrLogLevels');
     
     % wait a bit before next trial
     WaitSecs(0.4);
     
-end
-
-
-%% Final Quest object update if last trial was with figure present
-
-% if previous trial was with figure, update quest object
-if trialType(trialN) == 1
-    % missing response is understood as negative response for Quest
-    if isnan(figDetect(trialN))
-        questResp = 0;
-    else
-        questResp = figDetect(trialN);
-    end
-    q = QuestUpdate(q, tTest, questResp);
 end
 
 
@@ -542,10 +538,10 @@ hitRate = sum(acc==1 & trialType==1)/(trialMax/2);
 falseAlarmRate = sum(acc==0 & trialType==0)/(trialMax/2);
 disp([char(10), 'Participant''s ratio of correct responses for trials',...
     char(10), 'with figures (hit rate) was ', num2str(hitRate)]);
-disp([char(10), 'Participant''s ratio of detection ("figure present") responses for trials',...
+disp([char(10), 'Participant''s ratio of detection responses for trials',...
     char(10), 'without figures (false alarm rate) was ', num2str(falseAlarmRate), ...
     '.', char(10) 'Consider re-running the thresholding procedure if ',...
-    'the latter number is too high (>0.15)!']);
+    'the latter number is too high (>0.3)!']);
 
 % show ending message for a few secs
 WaitSecs(3);
