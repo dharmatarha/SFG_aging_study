@@ -50,7 +50,7 @@ mkdir(stimDirName);
 saveF = ['stimArrayTraining-', id, '.mat'];
 
 % figure coherence level values
-cohValues = [10, 9, 8, 7, 6, 5];
+cohValues = [12, 11, 10, 9, 8, 7];
 % figure duration values (in no. of chords)
 durValues = 10;
 % figure onset values in chords

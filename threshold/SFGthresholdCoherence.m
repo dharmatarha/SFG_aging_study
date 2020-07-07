@@ -1,7 +1,7 @@
 function SFGthresholdCoherence(subNum, varargin)
 %% Quest threshold for SFG stimuli aimed at estimating the effect of coherence
 %
-% USAGE: SFGthresholdCoherence(subNum, stimopt=SFGparams, trialMax=80)
+% USAGE: SFGthresholdCoherence(subNum, stimopt=SFGparamsThreshold, trialMax=80)
 %
 % The procedure changes the coherence level using the adaptive staircase
 % procedure QUEST. Fixed trial approach. The function returns the Quest
@@ -40,7 +40,7 @@ function SFGthresholdCoherence(subNum, varargin)
 
 % chcek no. of args
 if ~ismember(nargin, 1:3) 
-    error('Function SFGthreshold needs mandatory input arg "subNum" and optional args "stimopt" and "trialMax"!');
+    error('Function SFGthresholdCoherence needs mandatory input arg "subNum" and optional args "stimopt" and "trialMax"!');
 end
 % check mandatory input arg
 if ~ismembertol(subNum, 1:999)
@@ -114,7 +114,7 @@ qopt.pThreshold = 0.7;  % threshold of interest
 qopt.beta = 3.5;  % Weibull steepness, 3.5 is the default used for a wide range of stimuli 
 qopt.delta = 0.02;  % ratio of "blind" / "accidental" responses
 qopt.gamma = 0.5;  % ratio of correct responses without stimulus present
-qopt.grain = 0.01;  % internal table quantization
+qopt.grain = 0.001;  % internal table quantization
 qopt.range = 7;  % range of possible values
 
 % create Quest procedure object
@@ -288,7 +288,7 @@ elseif trialType(1) == 1  % if there is a figure in current trial
 end
 
 % query a stimulus
-[soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt);
+[soundOutput, ~, ~] = createSingleSFGstim(stimopt);
 
 % fill audio buffer with next stimuli
 buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
@@ -406,7 +406,7 @@ for trialN = 1:trialMax
         disp(['Coherence level is set to: ', num2str(stimopt.figureCoh)]);
         
         % create next stimulus and load it into buffer
-        [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt);
+        [soundOutput, ~, ~] = createSingleSFGstim(stimopt);
         buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
         PsychPortAudio('FillBuffer', pahandle, buffer);        
         
@@ -523,6 +523,18 @@ if trialType(trialN) == 1
     q = QuestUpdate(q, tTest, questResp);
 end
 
+% get final background-threshold estimate
+% ask Quest object about optimal log SNR - for setting toneComp
+tTest=QuestMean(q); 
+% find the closest SNR level we have
+[~, closestSnrIdx] = min(abs(snrLogLevels-tTest));
+% update stimopt accordingly - we get the required number of background
+% tones indirectly, via manipulating the total number of tones
+coherenceEst = cohLevels(closestSnrIdx); 
+
+% user message
+disp([char(10), 'Final estimate for coherence level: ', num2str(coherenceEst)]);
+
 
 %% Ending
 
@@ -547,6 +559,11 @@ disp([char(10), 'Participant''s ratio of detection ("figure present") responses 
     char(10), 'without figures (false alarm rate) was ', num2str(falseAlarmRate), ...
     '.', char(10) 'Consider re-running the thresholding procedure if ',...
     'the latter number is too high (>0.15)!']);
+
+% saving resutls with extra info
+save(saveF, 'q', 'respTime', 'figDetect', 'acc', 'trialType',... 
+    'trialMax', 'stimopt', 'qopt', 'cohLevels', 'snrLogLevels',...
+    'snrLevels', 'coherenceEst', 'hitRate', 'falseAlarmRate');
 
 % show ending message for a few secs
 WaitSecs(3);

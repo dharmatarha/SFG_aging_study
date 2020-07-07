@@ -2,7 +2,7 @@ function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocksTr
 %% Helper function sorting stimuli to training sequences
 %
 % USAGE: [blockIdx, stimTypes, stimTypeIdx, stimArray] = 
-%           stim2blocksTraining(stimArrayFile, seqFeatures=[10,10; 10,9; 10,8; 10,7; 10,6; 10,5])
+%           stim2blocksTraining(stimArrayFile, seqFeatures=[10,12; 10,11; 10,10; 10,9; 10,8; 10,7])
 %
 % For training phase of stochastic figure-ground (SFG) experiment. 
 % The function examines the stimuli array for unique stimuli types and 
@@ -18,7 +18,7 @@ function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocksTr
 %               coherence values needed for sequence. Row index corresponds
 %               to sequence number. Aim is to imitate the training setup
 %               used in (Toth et al., 2016, EEG signatures accompanying...)
-%               Defaults to [10,10; 10,9; 10,8; 10,7; 10,6; 10,5]    
+%               Defaults to [10,12; 10,11; 10,10; 10,9; 10,8; 10,7]
 %               
 %
 % Outputs:
@@ -48,7 +48,7 @@ if ~ismember(nargin, [1 2])
     error('Function needs mandatory input arg "stimArray" and optional arg "seqFeatures"!');
 end
 if nargin == 1
-    seqFeatures = [10,10; 10,9; 10,8; 10,7; 10,6; 10,5];
+    seqFeatures = [10,12; 10,11; 10,10; 10,9; 10,8; 10,7];
 end
 % file with stimuli array
 if ~exist(stimArrayFile, 'file')

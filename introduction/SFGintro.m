@@ -49,7 +49,7 @@ end
 
 % easily recognizable version 
 stimoptFigure = stimopt;
-stimoptFigure.figureCoh = 12;
+stimoptFigure.figureCoh = 14;
 disp([char(10), 'Stimulus settings for easily-recognizable version: ']);
 disp(stimoptFigure);
 

@@ -1,7 +1,7 @@
-function q = SFGthresholdBackground(subNum, stimopt, trialMax)
+function SFGthresholdBackground(subNum, varargin)
 %% Quest threshold for SFG stimuli aimed at estimating the effect of background notes
 %
-% USAGE: SFGthresholdBackground(subNum, stimopt=SFGparams, trialMax=80)
+% USAGE: SFGthresholdBackground(subNum, stimopt=SFGparamsThreshold, trialMax=80)
 %
 % The procedure changes the number of background tones using the adaptive staircase
 % procedure QUEST. Fixed trial approach. The function returns the Quest
@@ -40,7 +40,7 @@ function q = SFGthresholdBackground(subNum, stimopt, trialMax)
 
 % chcek no. of args
 if ~ismember(nargin, 1:3) 
-    error('Function SFGthreshold needs mandatory input arg "subNum" and optional args "stimopt" and "trialMax"!');
+    error('Function SFGthresholdBackground needs mandatory input arg "subNum" and optional args "stimopt" and "trialMax"!');
 end
 % check mandatory input arg
 if ~ismembertol(subNum, 1:999)
@@ -96,7 +96,7 @@ saveF = [dirN, '/thresholdBackground_sub', num2str(subNum), '_', timestamp{1}, '
 disp([char(10), 'Got output file path: ', saveF]);
 
 
-%% Load results from SFGthresholdCoherence
+%% Load results from SFGthresholdCoherence, get coherence level 
 
 % user message
 disp([char(10), 'Loading SFGthresholdCoherence results for subject']);
@@ -108,24 +108,13 @@ cohResFilePath = [cohResFile.folder, '/', cohResFile.name];
 % load results from coherence-thresholding
 cohRes = load(cohResFilePath);
 
+% rename the coherence estimate from SFGthresholdCoherence results for
+% readability
+baseCoherence = cohRes.coherenceEst;  % base coherence value needs to be stored separately from stimopt, as stimopt.figureCoh is overwritten in figure-absent trials
+
 % user message
 disp('Done');
-
-
-%% Get coherence level from SFGthresholdCoherence results
-
-% user message
-disp([char(10), 'Selecting coherence level based on SFGthresholdCoherence results']);
-
-% query the Quest object for threshold log SNR
-thresholdSNR = QuestMean(cohRes.q);
-% find the closest log snr value we have
-[~, closestSnrIdx] = min(abs(cohRes.snrLogLevels-thresholdSNR));
-% select corresponding coherence level as figure coherence
-stimopt.figureCoh = cohRes.cohLevels(closestSnrIdx);
-
-% user message
-disp(['Coherence level for background-thresholding: ', num2str(stimopt.figureCoh)]);
+disp(['Coherence level for background-thresholding: ', num2str(baseCoherence)]);
 
 
 %% Basic settings for Quest
@@ -136,8 +125,8 @@ disp([char(10), 'Setting params for Quest and initializing the procedure']);
 % log SNR scale of possible stimuli, for Quest
 % levels are defined for background tone numbers as
 % 1:stimopt.toneComp-stimopt.figCoh
-backgroundLevels = 1:stimopt.toneComp-stimopt.figureCoh;
-snrLevels = stimopt.figureCoh./backgroundLevels;  % broadcasting in Matlab! :)
+backgroundLevels = 1:stimopt.toneComp-baseCoherence;
+snrLevels = baseCoherence./backgroundLevels;  % broadcasting in Matlab! :)
 snrLogLevels = log(snrLevels);
 
 % settings for quest 
@@ -148,7 +137,7 @@ qopt.pThreshold = 0.8;  % threshold of interest
 qopt.beta = 3.5;  % Weibull steepness, 3.5 is the default used for a wide range of stimuli 
 qopt.delta = 0.02;  % ratio of "blind" / "accidental" responses
 qopt.gamma = 0.5;  % ratio of correct responses without stimulus present
-qopt.grain = 0.01;  % internal table quantization
+qopt.grain = 0.001;  % internal table quantization
 qopt.range = 7;  % range of possible values
 
 % create Quest procedure object
@@ -309,20 +298,27 @@ disp('Done');
 % user message
 disp([char(10), 'Preparing first stimulus in staircase...']);
 
-if trialType(1) == 0  % if there is no figure in current trial
+% if there is no figure in current trial, stimopt.figureCoh is set to zero
+% also, stimopt.toneComp just remains the last value it was set to
+if trialType(1) == 0  
     stimopt.figureCoh = 0;
     
-elseif trialType(1) == 1  % if there is a figure in current trial
-    % ask Quest object about optimal log SNR
+% if there is a figure in current trial, stimopt.figureCoh is set to the
+% base coherence value, and stimopt.toneComp is adjusted according to Quest
+elseif trialType(1) == 1  
+    % set figure coherence (presence)
+    stimopt.figureCoh = baseCoherence;
+    % ask Quest object about optimal log SNR - for setting toneComp
     tTest=QuestMean(q); 
     % find the closest SNR level we have
     [~, closestSnrIdx] = min(abs(snrLogLevels-tTest));
-    % update stimopt accordingly
-    stimopt.figureCoh = backgroundLevels(closestSnrIdx);
+    % update stimopt accordingly - we get the required number of background
+    % tones indirectly, via manipulating the total number of tones
+    stimopt.toneComp = backgroundLevels(closestSnrIdx)+baseCoherence;
 end
 
 % query a stimulus
-[soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt);
+[soundOutput, ~, ~] = createSingleSFGstim(stimopt);
 
 % fill audio buffer with next stimuli
 buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
@@ -422,25 +418,31 @@ for trialN = 1:trialMax
             q = QuestUpdate(q, tTest, questResp);
         end
         
-        % if current trial is a catch trial, without figure
+        % if current trial is a catch trial, without figure, stimopt.figureCoh is set to zero
+        % also, stimopt.toneComp just remains the last value it was set to
         if trialType(trialN) == 0
             stimopt.figureCoh = 0;  % no figure
             
-        % else query Quest object, get stimopt.figureCoh
+        % else stimopt.figureCoh is set to the base coherence value, and 
+        % stimopt.toneComp is adjusted according to Quest
         elseif trialType(trialN) == 1
-            % ask Quest object about optimal log SNR
+            % set figure coherence (presence)
+            stimopt.figureCoh = baseCoherence;
+            % ask Quest object about optimal log SNR - for setting toneComp
             tTest=QuestMean(q); 
             % find the closest SNR level we have
             [~, closestSnrIdx] = min(abs(snrLogLevels-tTest));
-            % update stimopt accordingly
-            stimopt.figureCoh = backgroundLevels(closestSnrIdx);     
+            % update stimopt accordingly - we get the required number of background
+            % tones indirectly, via manipulating the total number of tones
+            stimopt.toneComp = backgroundLevels(closestSnrIdx)+baseCoherence;   
         end
         
         % user message
+        disp(['Number of background tones is set to: ', num2str(stimopt.toneComp-stimopt.figureCoh)]);
         disp(['Coherence level is set to: ', num2str(stimopt.figureCoh)]);
         
         % create next stimulus and load it into buffer
-        [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt);
+        [soundOutput, ~, ~] = createSingleSFGstim(stimopt);
         buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
         PsychPortAudio('FillBuffer', pahandle, buffer);        
         
@@ -535,12 +537,39 @@ for trialN = 1:trialMax
     
     % save logging/results variable
     save(saveF, 'q', 'respTime', 'figDetect', 'acc', 'trialType', 'cohRes',... 
-        'trialMax', 'stimopt', 'qopt', 'backgroundLevels', 'snrLogLevels');
+        'trialMax', 'stimopt', 'qopt', 'backgroundLevels', 'snrLogLevels',...
+        'snrLevels');
     
     % wait a bit before next trial
     WaitSecs(0.4);
     
 end
+
+
+%% Final Quest object update if last trial was with figure present
+
+% if previous trial was with figure, update quest object
+if trialType(trialN) == 1
+    % missing response is understood as negative response for Quest
+    if isnan(figDetect(trialN))
+        questResp = 0;
+    else
+        questResp = figDetect(trialN);
+    end
+    q = QuestUpdate(q, tTest, questResp);
+end
+
+% get final background-threshold estimate
+% ask Quest object about optimal log SNR - for setting toneComp
+tTest=QuestMean(q); 
+% find the closest SNR level we have
+[~, closestSnrIdx] = min(abs(snrLogLevels-tTest));
+% update stimopt accordingly - we get the required number of background
+% tones indirectly, via manipulating the total number of tones
+backgroundEst = backgroundLevels(closestSnrIdx); 
+
+% user message
+disp([char(10), 'Final estimate for number of background tones: ', num2str(backgroundEst)]);
 
 
 %% Ending
@@ -566,6 +595,11 @@ disp([char(10), 'Participant''s ratio of detection responses for trials',...
     char(10), 'without figures (false alarm rate) was ', num2str(falseAlarmRate), ...
     '.', char(10) 'Consider re-running the thresholding procedure if ',...
     'the latter number is too high (>0.15)!']);
+
+% saving resutls with extra info
+save(saveF, 'q', 'respTime', 'figDetect', 'acc', 'trialType', 'cohRes',... 
+    'trialMax', 'stimopt', 'qopt', 'backgroundLevels', 'snrLogLevels',...
+    'snrLevels', 'backgroundEst', 'hitRate', 'falseAlarmRate');
 
 % show ending message for a few secs
 WaitSecs(3);
