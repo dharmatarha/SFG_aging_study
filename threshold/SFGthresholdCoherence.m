@@ -10,8 +10,8 @@ function SFGthresholdCoherence(subNum, varargin)
 % not exist.
 %
 % IMPORTANT: INITIAL QUEST PARAMETERS AND PSYCHTOOLBOX SETTINGS ARE 
-% HARDCODED! Specific settings are for Mordor / Gondor labs of RCNS,
-% Budapest.
+% HARDCODED! TARGET THRESHOLD IS 70%! 
+% Specific settings in general are for Mordor / Gondor labs of RCNS, Budapest.
 %
 % Mandatory input:
 % subNum        - Numeric value, subject number. One of 1:999.
@@ -67,11 +67,12 @@ if ~exist('trialMax', 'var')
 end
 
 % user message
-disp([char(10), 'Called function SFGthreshold with inputs: ',...
+disp([char(10), 'Called function SFGthresholdCoherence with inputs: ',...
      char(10), 'subNum: ', num2str(subNum),...
      char(10), 'number of trials for Quest: ', num2str(trialMax),...
      char(10), 'stimulus params: ']);
 disp(stimopt);
+disp([char(10), 'TARGET THRESHOLD IS SET TO 70%!']);
 
 
 %% Get subject's folder, define output file path
@@ -107,7 +108,7 @@ snrLogLevels = log(snrLevels);
 
 % settings for quest 
 qopt = struct;
-qopt.tGuess = -0.85;  % prior threshold guess, 0.85 equals an SNR of ~0.43 (=coherence level of 6)
+qopt.tGuess = -0.85;  % prior threshold guess, -0.85 equals an SNR of ~0.43 (=coherence level of 6)
 qopt.tGuessSd = 5;  % SD of prior guess
 qopt.pThreshold = 0.7;  % threshold of interest
 qopt.beta = 3.5;  % Weibull steepness, 3.5 is the default used for a wide range of stimuli 

@@ -11,8 +11,8 @@ function q = SFGthresholdBackground(subNum, stimopt, trialMax)
 % output from SFGthresholdCoherence.m
 %
 % IMPORTANT: INITIAL QUEST PARAMETERS AND PSYCHTOOLBOX SETTINGS ARE 
-% HARDCODED! Specific settings are for Mordor / Gondor labs of RCNS,
-% Budapest.
+% HARDCODED! TARGET THRESHOLD IS 80%! 
+% Specific settings in general are for Mordor / Gondor labs of RCNS, Budapest.
 %
 % Mandatory input:
 % subNum        - Numeric value, subject number. One of 1:999.
@@ -67,11 +67,12 @@ if ~exist('trialMax', 'var')
 end
 
 % user message
-disp([char(10), 'Called function SFGthreshold with inputs: ',...
+disp([char(10), 'Called function SFGthresholdBackground with inputs: ',...
      char(10), 'subNum: ', num2str(subNum),...
      char(10), 'number of trials for Quest: ', num2str(trialMax),...
      char(10), 'stimulus params: ']);
 disp(stimopt);
+disp([char(10), 'TARGET THRESHOLD IS SET TO 80%!']);
 
 
 %% Get subject's folder, define output file path
@@ -97,12 +98,34 @@ disp([char(10), 'Got output file path: ', saveF]);
 
 %% Load results from SFGthresholdCoherence
 
+% user message
+disp([char(10), 'Loading SFGthresholdCoherence results for subject']);
+
 % get file name - exact file name contains unknown time stamp
 cohResFile = dir([dirN, '/thresholdCoherence_sub', num2str(subNum), '*.mat']);
 cohResFilePath = [cohResFile.folder, '/', cohResFile.name];
 
 % load results from coherence-thresholding
 cohRes = load(cohResFilePath);
+
+% user message
+disp('Done');
+
+
+%% Get coherence level from SFGthresholdCoherence results
+
+% user message
+disp([char(10), 'Selecting coherence level based on SFGthresholdCoherence results']);
+
+% query the Quest object for threshold log SNR
+thresholdSNR = QuestMean(cohRes.q);
+% find the closest log snr value we have
+[~, closestSnrIdx] = min(abs(cohRes.snrLogLevels-thresholdSNR));
+% select corresponding coherence level as figure coherence
+stimopt.figureCoh = cohRes.cohLevels(closestSnrIdx);
+
+% user message
+disp(['Coherence level for background-thresholding: ', num2str(stimopt.figureCoh)]);
 
 
 %% Basic settings for Quest
@@ -111,14 +134,15 @@ cohRes = load(cohResFilePath);
 disp([char(10), 'Setting params for Quest and initializing the procedure']);
 
 % log SNR scale of possible stimuli, for Quest
-% levels are defined for coherence values 0:stimopt.toneComp-1
-cohLevels = 0:stimopt.toneComp-1;
-snrLevels = cohLevels./(stimopt.toneComp:-1:1);
+% levels are defined for background tone numbers as
+% 1:stimopt.toneComp-stimopt.figCoh
+backgroundLevels = 1:stimopt.toneComp-stimopt.figureCoh;
+snrLevels = stimopt.figureCoh./backgroundLevels;  % broadcasting in Matlab! :)
 snrLogLevels = log(snrLevels);
 
 % settings for quest 
 qopt = struct;
-qopt.tGuess = -0.8;  % prior threshold guess, 0.8 equals an SNR of ~0.43
+qopt.tGuess = -0.12;  % prior threshold guess, -0.12 equals an SNR of ~0.89
 qopt.tGuessSd = 5;  % SD of prior guess
 qopt.pThreshold = 0.7;  % threshold of interest
 qopt.beta = 3.5;  % Weibull steepness, 3.5 is the default used for a wide range of stimuli 
@@ -294,7 +318,7 @@ elseif trialType(1) == 1  % if there is a figure in current trial
     % find the closest SNR level we have
     [~, closestSnrIdx] = min(abs(snrLogLevels-tTest));
     % update stimopt accordingly
-    stimopt.figureCoh = cohLevels(closestSnrIdx);
+    stimopt.figureCoh = backgroundLevels(closestSnrIdx);
 end
 
 % query a stimulus
@@ -409,7 +433,7 @@ for trialN = 1:trialMax
             % find the closest SNR level we have
             [~, closestSnrIdx] = min(abs(snrLogLevels-tTest));
             % update stimopt accordingly
-            stimopt.figureCoh = cohLevels(closestSnrIdx);     
+            stimopt.figureCoh = backgroundLevels(closestSnrIdx);     
         end
         
         % user message
@@ -510,8 +534,8 @@ for trialN = 1:trialMax
     end    
     
     % save logging/results variable
-    save(saveF, 'q', 'respTime', 'figDetect', 'acc', 'trialType',... 
-        'trialMax', 'stimopt', 'qopt', 'cohLevels', 'snrLogLevels');
+    save(saveF, 'q', 'respTime', 'figDetect', 'acc', 'trialType', 'cohRes',... 
+        'trialMax', 'stimopt', 'qopt', 'backgroundLevels', 'snrLogLevels');
     
     % wait a bit before next trial
     WaitSecs(0.4);
@@ -541,7 +565,7 @@ disp([char(10), 'Participant''s ratio of correct responses for trials',...
 disp([char(10), 'Participant''s ratio of detection responses for trials',...
     char(10), 'without figures (false alarm rate) was ', num2str(falseAlarmRate), ...
     '.', char(10) 'Consider re-running the thresholding procedure if ',...
-    'the latter number is too high (>0.3)!']);
+    'the latter number is too high (>0.15)!']);
 
 % show ending message for a few secs
 WaitSecs(3);
