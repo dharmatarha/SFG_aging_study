@@ -37,9 +37,14 @@ function stimopt = SFGparams()
 % date: 2020
 
         
-% get a seed for the random number generator, as part of the current param
-% set
-c = clock; seed = round(sum(c));
+% We often generate stimuli with several successive calls to 
+% createSFGstimuli while calling SFGparams.m only once. 
+% Thus, it is better default behavior to ommit setting the random seed, 
+% avoiding repeating the same stimuli over and over again.         
+% (Get a seed for the random number generator, as part of the current param
+% set)
+% c = clock; seed = round(sum(c));
+seed = [];
 
 % fields = parameter values
 stimopt = struct( ...

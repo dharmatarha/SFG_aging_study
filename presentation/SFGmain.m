@@ -1,7 +1,7 @@
-function SFGmain(subNum, stimArrayFile, blockNo)
+function SFGmain(subNum, varargin)
 %% Stochastic figure-ground experiment - main experimental script
 %
-% USAGE: SFGmain(subNum, stimArrayFile, blockNo)
+% USAGE: SFGmain(subNum, stimArrayFile=./subjectXX/stimArray*.mat, blockNo=10, triggers='yes')
 %
 % Stimulus presentation script for stochastic figure-ground (SFG) experiment. 
 % The script requires pre-generated stimuli organized into a
@@ -12,13 +12,20 @@ function SFGmain(subNum, stimArrayFile, blockNo)
 % parameters/settings, and also for detecting and handling earlier sessions 
 % by the same subject (for multi-session experiment).
 %
-% Inputs:
-% subNum        - Subject number, integer between 1-999
-% stimArrayFile - *.mat file with cell array "stimArray" containing all 
-%               stimuli + features (size: no. of stimuli X 11 columns)
-% blockNo       - Number of blocks to sort trials into, integer between
-%               1-50
-% 
+% Mandatory input:
+% subNum        - Numeric value, one of 1:999. Subject number.
+%
+% Optional inputs:
+% stimArrayFile - Char array, path to *.mat file containing the cell array 
+%               "stimArray" that includes all stimuli + features
+%               (size: no. of stimuli X 12 columns). Defaults to
+%               ./subjectXX/stimArray*.mat, where XX stands for subject
+%               number (subNum).
+% blockNo       - Numeric value, one of 1:50. Number of blocks to sort 
+%               trials into. Defaults to 10. 
+% triggers      - Char array, one of {'yes', 'no'}. Sets flag for using /
+%               not using TTL-level triggers used with EEG-recording.
+%
 % Results (response times and presentation timestamps for later checks) are
 % saved out into /subjectXX/subXXLog.mat, where XX stands for subject
 % number.
@@ -30,7 +37,7 @@ function SFGmain(subNum, stimArrayFile, blockNo)
 % (3) Main psychtoolbox settings are hard-coded!! Look for the psychtoolbox
 % initialization + the audio parameters code block for details
 % (4) Logging (result) variable columns: 
-% logHeader={'subNum', 'blockNo', 'trialNo', 'stimNo', 'figDuration',... 
+% logHeader={'subNum', 'blockNo', 'trialNo', 'stimNo', 'toneComp',... 
 %     'figCoherence', 'figPresence', 'figStartChord', 'figEndChord',... 
 %     'accuracy', 'buttonResponse', 'respTime', 'iti', 'trialStart',... 
 %     'soundOnset', 'figureStart', 'respIntervalStart', 'trigger'};
@@ -39,24 +46,55 @@ function SFGmain(subNum, stimArrayFile, blockNo)
 
 %% Input checks
 
-if nargin ~= 3
-    error('Function needs input args "subNum", "stimArrayFile" and "blockNo"!');
+% check no. of input args
+if ~ismembertol(nargin, 1:4)
+    error('Function SFGmain requires input arg "subNum" while input args "stimArrayFile", "blockNo" and "triggers" are optional!');
 end
-% subject number
+% check mandatory arg - subject number
 if ~ismembertol(subNum, 1:999)
     error('Input arg "subNum" should be between 1 - 999!');
 end
-% file with stimuli array
-if ~exist(stimArrayFile, 'file')
-    error('Cannot find input arg "stimArrayFile"!');
+% check and sort optional input args
+if ~isempty(varargin)
+    for v = 1:length(varargin)
+        if isnumeric(varargin{v}) && ismembertol(varargin{v}, 1:50) && ~exist('blockNo', 'var')
+            blockNo = varargin{v};
+        elseif ischar(varargin{v}) && exist(varargin{v}, 'file') && ~exist('stimArrayFile', 'var')
+            stimArrayFile = varargin{v};
+        elseif ischar(varargin{v}) && ismember(varargin{v}, {'yes', 'no'}) && ~exist('triggers', 'var')
+            triggers = varargin{v};    
+        else
+            error('An input arg could not be mapped nicely to "stimArrayFile" or "blockNo"!');
+        end
+    end
 end
-% number of blocks
-if ~ismembertol(blockNo, 1:50)
-    error('Input arg "blockNo" should be between 1 - 50!');
+% default values
+if ~exist('stimArrayFile', 'var')
+    % look for any file "stimArray*.mat" in the subject's folder
+    stimArrayFileStruct = dir(['subject', num2str(subNum), '/stimArray*.mat']);
+    % if there was none or there were multiple
+    if isempty(stimArrayFileStruct) || length(stimArrayFileStruct)~=1
+        error(['Either found too many or no stimArrayFile at ./subject', num2str(subNum), '/stimArray*.mat !!!']);
+    else
+        stimArrayFile = [stimArrayFileStruct.folder, '/', stimArrayFileStruct.name];
+    end
+end
+if ~exist('blockNo', 'var')
+    blockNo = 10;
+end
+if ~exist('triggers', 'var')
+    triggers = 'yes';
+end
+
+% turn input arg "triggers" into boolean
+if strcmp(triggers, 'yes')
+    triggers = true;
+else
+    triggers = false;
 end
 
 % user message
-disp([char(10), 'Called SFG experiment function fg_v4 with input args: ',...
+disp([char(10), 'Called SFGmain (the main experimental function) with input args: ',...
     char(10), 'subNum: ', num2str(subNum),...
     char(10), 'stimArrayFile:', stimArrayFile,...
     char(10), 'blockNo: ', num2str(blockNo)]);
@@ -70,7 +108,7 @@ disp([char(10), 'Loading params and stimuli, checking ',...
 
 % a function handles all stimulus sorting to blocks and potential conflicts
 % with earlier recordings for same subject
-[stimArray, ~, startTrialNo,... 
+[stimArray, ~, ~,... 
     startBlockNo, blockIdx, trialIdx,...
     logVar, subLogF, returnFlag,... 
     logHeader, stimTypes] = expParamsHandler(subNum, stimArrayFile, blockNo);
@@ -157,6 +195,7 @@ trig.playbackStart = 210;
 trig.respPresent = 220;
 trig.respAbsent = 230;
 trig.l = 1000; % trigger length in microseconds
+trig.blockStart = 100;
 
 % triggers for stimulus types, based on the number of unique stimulus types
 % we assume that stimTypes is a cell array (with headers) that contains the 
@@ -289,8 +328,10 @@ ListenChar(-1);
 % realtime priority
 Priority(1);
 
-% init parallel port control
-ppdev_mex('Open', 1);
+if triggers
+    % init parallel port control
+    ppdev_mex('Open', 1);
+end
 
 % user message
 disp([char(10), 'Initialized psychtoolbox basics, opened window, ',...
@@ -330,7 +371,9 @@ while 1
     end
 end
 if abortFlag
-    ppdev_mex('Close', 1);
+    if triggers
+        ppdev_mex('Close', 1);
+    end
     ListenChar(0);
     Priority(0);
     RestrictKeysForKbCheck([]);
@@ -398,7 +441,9 @@ for block = startBlockNo:blockNo
         end
     end
     if abortFlag
-        ppdev_mex('Close', 1);
+        if triggers
+            ppdev_mex('Close', 1);
+        end
         ListenChar(0);
         Priority(0);
         RestrictKeysForKbCheck([]);
@@ -407,6 +452,13 @@ for block = startBlockNo:blockNo
         ShowCursor(screenNumber);
         return;
     end    
+    
+    if triggers
+        % block start trigger + block number trigger
+        lptwrite(1, trig.blockStart, trig.l);
+        WaitSecs(0.005);
+        lptwrite(1, trig.blockStart+block, trig.l);
+    end
     
     
     %% Trials loop
@@ -422,10 +474,12 @@ for block = startBlockNo:blockNo
         Screen('DrawingFinished', win);
         trialStart = Screen('Flip', win); 
         
-        % trial start trigger
-        lptwrite(1, trig.trialStart, trig.l);
-        WaitSecs(0.005);
-        lptwrite(1, trig.stimType(trial), trig.l);
+        if triggers
+            % trial start trigger + trial type trigger
+            lptwrite(1, trig.trialStart, trig.l);
+            WaitSecs(0.005);
+            lptwrite(1, trig.stimType(trial), trig.l);
+        end
         
         % user message
         disp([char(10), 'Starting trial ', num2str(trialCounterForBlock)]);
@@ -445,7 +499,11 @@ for block = startBlockNo:blockNo
         
         % blocking playback start for precision
         startTime = PsychPortAudio('Start', pahandle, 1, trialStart+iti(trial), 1);
-        lptwrite(1, trig.playbackStart, trig.l);
+        
+        % playback start trigger
+        if triggers
+            lptwrite(1, trig.playbackStart, trig.l);
+        end
         
         % user message
         disp(['Audio started at ', num2str(startTime-trialStart), ' secs after trial start']);
@@ -471,12 +529,18 @@ for block = startBlockNo:blockNo
                 if find(keyCode) == keys.figPresent
                     figDetect(trial) = 1;
                     respFlag = 1;
-                    lptwrite(1, trig.respPresent, trig.l);
+                    % response trigger
+                    if triggers
+                        lptwrite(1, trig.respPresent, trig.l);
+                    end
                     break;
                 elseif find(keyCode) == keys.figAbsent
                     figDetect(trial) = 0;
                     respFlag = 1;
-                    lptwrite(1, trig.respAbsent, trig.l);
+                    % response trigger
+                    if triggers
+                        lptwrite(1, trig.respAbsent, trig.l);
+                    end
                     break;
                 % if abort was requested    
                 elseif find(keyCode) == keys.abort
@@ -488,7 +552,9 @@ for block = startBlockNo:blockNo
         
         % if abort was requested, quit
         if abortFlag
-            ppdev_mex('Close', 1);
+            if triggers
+                ppdev_mex('Close', 1);
+            end
             ListenChar(0);
             Priority(0);
             RestrictKeysForKbCheck([]);
@@ -573,7 +639,9 @@ for block = startBlockNo:blockNo
             end
         end
         if abortFlag
-            ppdev_mex('Close', 1);
+            if triggers
+                ppdev_mex('Close', 1);
+            end
             ListenChar(0);
             Priority(0);
             RestrictKeysForKbCheck([]);
@@ -607,7 +675,9 @@ end  % block for loop
 disp(' ');
 disp('Got to the end!');
 
-ppdev_mex('Close', 1);
+if triggers
+    ppdev_mex('Close', 1);
+end
 ListenChar(0);
 Priority(0);
 RestrictKeysForKbCheck([]);

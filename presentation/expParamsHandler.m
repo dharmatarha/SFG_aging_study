@@ -10,7 +10,7 @@ function [stimArray, sortIndices, startTrialNo,...
 %    stimTypes] = expParamsHandler(subNum, stimArrayFile, blockNo)
 %
 % For stochastic figure-ground (SFG) experiment. To be called by the main 
-% experimental script
+% experimental script (SFGmain.m).
 % 
 % The function sorts out subject number conflicts, including cases of
 % paused and restarted experiments, multi-session recordings and so on.
@@ -25,7 +25,7 @@ function [stimArray, sortIndices, startTrialNo,...
 % Inputs:
 % subNum        - Subject number, integer between 1-999
 % stimArrayFile - *.mat file with cell array "stimArray" containing all 
-%               stimuli + features (size: no. of stimuli X 11 columns)
+%               stimuli + features (size: no. of stimuli X 12 columns)
 % blockNo       - Number of blocks to sort trials into, integer between
 %               1-50
 %
@@ -106,7 +106,7 @@ oldParamsFileFlag = 0;
 oldParamsMatchFlag = 0;
 logFileFlag = 0;
 % log header - needed for sanity check as well
-logHeader={'subNum', 'blockNo', 'trialNo', 'stimNo', 'figDuration',... 
+logHeader={'subNum', 'blockNo', 'trialNo', 'stimNo', 'toneComp',... 
     'figCoherence', 'figPresence', 'figStartChord', 'figEndChord',... 
     'accuracy', 'buttonResponse', 'respTime', 'iti', 'trialStart',... 
     'soundOnset', 'figureStart', 'respIntervalStart', 'trigger'};
@@ -270,7 +270,7 @@ if ~logFileFlag
     logVar(2:end, strcmp(logHeader, 'blockNo')) = stimArray(:, 14);  % blockNo
     logVar(2:end, strcmp(logHeader, 'trialNo')) = stimArray(:, 15);  % trialNo
     logVar(2:end, strcmp(logHeader, 'stimNo')) = num2cell(sortIndices);  % stimNo - original stimArray row numbers (ie. stimulus numbers) before applying sortrows
-    logVar(2:end, strcmp(logHeader, 'figDuration')) = stimArray(:, 5);  % figure duration in chords
+    logVar(2:end, strcmp(logHeader, 'toneComp')) = stimArray(:, 11);  % number of tone components in stimuli
     logVar(2:end, strcmp(logHeader, 'figCoherence')) = stimArray(:, 6);  % figure coherence in chords
     logVar(2:end, strcmp(logHeader, 'figPresence')) = num2cell(cell2mat(stimArray(:, 6))~=0);  % figure presence/absence
     logVar(2:end, strcmp(logHeader, 'figStartChord')) = stimArray(:, 9);  % figure start in terms of chords

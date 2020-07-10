@@ -10,19 +10,20 @@ function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocks(s
 %
 %
 % Inputs:
-% stimArrayFile - *.mat file with cell array "stimArray" containing all 
-%               stimuli + features (size: no. of stimuli X 11 columns)
-% blockNo       - Number of blocks to sort trials into, integer between
-%               1-50
+% stimArrayFile - Char array, path of *.mat file with cell array "stimArray" 
+%               containing all stimuli + features 
+%               (size: no. of stimuli X 11 columns)
+% blockNo       - Numeric value, one of 1:50. Number of blocks to sort 
+%               trials into
 %
 % Outputs:
 % blockIdx      - Numeric column vector with a block index for each
 %               stimulus in the stimuli array
 % stimTypes     - Matrix where each line corresponds to a unique stimulus 
 %               type in terms of figure duration, coherence level and 
-%               figure presence/absence. Irs size is "no. of unique types" 
-%               X 3, with columns corresponding to duration, coherence and
-%               figure presence/absence
+%               figure presence/absence. Its size is "no. of unique types" 
+%               X 3, with columns corresponding to tone no
+%               (stimopt.toneComp), coherence and figure presence/absence
 % stimTypeIdx   - Numeric column vector with a stimulus type index for each
 %               stimulus in the stimuli array. Index numbers correspond to 
 %               the rows of the stimTypes output variable 
@@ -63,7 +64,7 @@ disp([char(10), 'Called stim2blocks with input args: ',...
 % number of expected cell columns for the stimuli array
 stimFeaturesNo = 12;
 % header for final stimTypes cell array (see the last code block)
-stimTypesHdr = {'figDuration', 'figCoherence', 'figPresence', 'stimulusTypeIndex'};
+stimTypesHdr = {'figToneComp', 'figCoherence', 'figPresence', 'stimulusTypeIndex'};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % load stimuli
