@@ -245,7 +245,7 @@ disp([char(10), 'Loaded stimuli and saved out parameters/settings into params fi
 
 % attach stimulus type indices, block and trial indices to stimulus
 % array - but first a quick sanity check of stimArray size
-if ~isequal(size(stimArray), [length(trialIdx), 11])
+if ~isequal(size(stimArray), [length(trialIdx), 12])
     error('Stimulus cell array ("stimArray") has unexpected size, investigate!');
 end
 stimArray = [stimArray, num2cell(stimTypeIdx), num2cell(blockIdx), num2cell(trialIdx)];
@@ -267,12 +267,12 @@ if ~logFileFlag
     logVar(1, :) = logHeader;
     % insert known columns in advance
     logVar(2:end, strcmp(logHeader, 'subNum')) = num2cell(repmat(subNum, [size(stimArray, 1), 1]));  % subNum
-    logVar(2:end, strcmp(logHeader, 'blockNo')) = stimArray(:, 13);  % blockNo
-    logVar(2:end, strcmp(logHeader, 'trialNo')) = stimArray(:, 14);  % trialNo
+    logVar(2:end, strcmp(logHeader, 'blockNo')) = stimArray(:, 14);  % blockNo
+    logVar(2:end, strcmp(logHeader, 'trialNo')) = stimArray(:, 15);  % trialNo
     logVar(2:end, strcmp(logHeader, 'stimNo')) = num2cell(sortIndices);  % stimNo - original stimArray row numbers (ie. stimulus numbers) before applying sortrows
-    logVar(2:end, strcmp(logHeader, 'figDuration')) = stimArray(:, 6);  % figure duration in chords
-    logVar(2:end, strcmp(logHeader, 'figCoherence')) = stimArray(:, 7);  % figure coherence in chords
-    logVar(2:end, strcmp(logHeader, 'figPresence')) = num2cell(strcmp(stimArray(:, 5), 'yes'));  % figure presence/absence
+    logVar(2:end, strcmp(logHeader, 'figDuration')) = stimArray(:, 5);  % figure duration in chords
+    logVar(2:end, strcmp(logHeader, 'figCoherence')) = stimArray(:, 6);  % figure coherence in chords
+    logVar(2:end, strcmp(logHeader, 'figPresence')) = num2cell(cell2mat(stimArray(:, 6))~=0);  % figure presence/absence
     logVar(2:end, strcmp(logHeader, 'figStartChord')) = stimArray(:, 9);  % figure start in terms of chords
     logVar(2:end, strcmp(logHeader, 'figEndChord')) = stimArray(:, 10);  % figure start in terms of chords
 end

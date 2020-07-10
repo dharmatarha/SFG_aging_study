@@ -4,14 +4,21 @@ function SFGthresholdBackground(subNum, varargin)
 % USAGE: SFGthresholdBackground(subNum, stimopt=SFGparamsThreshold, trialMax=80)
 %
 % The procedure changes the number of background tones using the adaptive staircase
-% procedure QUEST. Fixed trial approach. The function returns the Quest
-% object ("q") and also saves it out to the folder of the subject. 
+% procedure QUEST. Fixed trial + QuestSd check approach, that is, the
+% function checks QuestSd after a fixed number of trials (=trialMax), and
+% runs for an additional number of trials (trialExtraMaX, hardcoded!) if  
+% the standard deviation is under a predefined threshold 
+% (median(abs(diff(snrLogLevels)))).
+%
+% The function returns the Quest object ("q") and also saves it out to 
+% the folder of the subject. 
 %
 % Expects subject's folder to already exist and contain the results /
 % output from SFGthresholdCoherence.m
 %
 % IMPORTANT: INITIAL QUEST PARAMETERS AND PSYCHTOOLBOX SETTINGS ARE 
-% HARDCODED! TARGET THRESHOLD IS 80%! 
+% HARDCODED! TARGET THRESHOLD IS 65%! 
+%
 % Specific settings in general are for Mordor / Gondor labs of RCNS, Budapest.
 %
 % Mandatory input:
@@ -72,7 +79,7 @@ disp([char(10), 'Called function SFGthresholdBackground with inputs: ',...
      char(10), 'number of trials for Quest: ', num2str(trialMax),...
      char(10), 'stimulus params: ']);
 disp(stimopt);
-disp([char(10), 'TARGET THRESHOLD IS SET TO 80%!']);
+disp([char(10), 'TARGET THRESHOLD IS SET TO 65%!']);
 
 
 %% Get subject's folder, define output file path
@@ -125,7 +132,7 @@ disp([char(10), 'Setting params for Quest and initializing the procedure']);
 % log SNR scale of possible stimuli, for Quest
 % levels are defined for background tone numbers as
 % 1:stimopt.toneComp-stimopt.figCoh
-backgroundLevels = 1:stimopt.toneComp-baseCoherence;
+backgroundLevels = stimopt.toneComp-baseCoherence:stimopt.toneComp*2;
 snrLevels = baseCoherence./backgroundLevels;  % broadcasting in Matlab! :)
 snrLogLevels = log(snrLevels);
 
@@ -133,16 +140,27 @@ snrLogLevels = log(snrLevels);
 qopt = struct;
 qopt.tGuess = -0.12;  % prior threshold guess, -0.12 equals an SNR of ~0.89
 qopt.tGuessSd = 5;  % SD of prior guess
-qopt.pThreshold = 0.8;  % threshold of interest
 qopt.beta = 3.5;  % Weibull steepness, 3.5 is the default used for a wide range of stimuli 
 qopt.delta = 0.02;  % ratio of "blind" / "accidental" responses
 qopt.gamma = 0.5;  % ratio of correct responses without stimulus present
 qopt.grain = 0.001;  % internal table quantization
 qopt.range = 7;  % range of possible values
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+qopt.pThreshold = 0.65;  % threshold of interest
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % create Quest procedure object
 q = QuestCreate(qopt.tGuess, qopt.tGuessSd, qopt.pThreshold,... 
     qopt.beta, qopt.delta, qopt.gamma, qopt.grain, qopt.range);
+
+% first few trials are not used for updating the Quest object (due to
+% unfamiliarity with the task in the beginning), we set a variable
+% controlling the number of trials to ignore:
+qopt.ignoreTrials = 3;  % must be > 0 
+
+% maximum number of extra trials when Quest estimate SD is too large
+trialExtraMax = 20;
 
 % user message
 disp('Done with Quest init');
@@ -224,8 +242,17 @@ Screen('BlendFunction', qMarkWin, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 Screen('TextSize', qMarkWin, 50);
 Screen('DrawText', qMarkWin, '?', xCenter-15, yCenter-15, textColor);
 
-% use default audio device
-device = [];
+% get correct audio device
+device = [];  % system default is our default as well
+% we only change audio device in the lab, when we see the correct audio
+% card
+tmpDevices = PsychPortAudio('GetDevices');
+for i = 1:numel(tmpDevices)
+    if strcmp(tmpDevices(i).DeviceName, 'ESI Juli@: ICE1724 (hw:2,0)')
+        device = tmpDevices(i).DeviceIndex;
+    end
+end
+
 % mode is simple playback
 mode = 1;
 % reqlatencyclass is set to low-latency
@@ -275,17 +302,17 @@ disp([char(10), 'Initializing experiment settings...']);
 % ratio of catch (no figure) trials
 catchRatio = 0.5;
 % vector for figure / catch trials
-trialType = ones(trialMax, 1);
-trialType(randperm(trialMax, round(trialMax*catchRatio))) = 0; 
+trialType = ones(trialMax+trialExtraMax, 1);
+trialType(randperm(trialMax+trialExtraMax, round((trialMax+trialExtraMax)*catchRatio))) = 0; 
 % inter-trial interval, random between 700-1200 ms
-iti = rand([trialMax, 1])*0.5+0.7;
+iti = rand([trialMax+trialExtraMax, 1])*0.5+0.7;
 % maximum time for a response, secs
 respInt = 2;
 % stimulus length for sanity checks later
 stimLength = stimopt.totalDur;
 
 % response variables preallocation
-figDetect = nan(trialMax, 1);
+figDetect = nan(trialMax+trialExtraMax, 1);
 respTime = figDetect;
 acc = figDetect;
 
@@ -332,16 +359,13 @@ disp([char(10), 'Done, we are ready to start the staircase for threshold ',...
 %% Instructions phase
 
 % instructions text
-instrText = ['A következő részben ugyanaz lesz a feladata, mint az előzőben - \n',...
-    'kérjük, jelezze a próbák során, hogy hall-e egy, \n',...
-    'a háttérből kiemelkedő hangot vagy nem.\n\n',... 
-    'Összesen ', num2str(trialMax), ' hangot foguk lejátszani Önnek, \n',...
+instrText = ['Ugyanaz lesz a feladata, mint az előző blokkban. \n\n',...
+    'Összesen ', num2str(trialMax), ' hangmintát fogunk lejátszani Önnek, \n',...
     'a feladat kb. ', num2str(round(trialMax/9)), ' percen át fog tartani.\n\n',...
-    'Fontos! Mindig az "', KbName(keys.figPresent), '" gombbal jelezze, ha hallott \n',... 
-    'egy különálló hangot, és az "' ,KbName(keys.figAbsent), '" gombot nyomja meg ha \n',...
-    'nem hallott különálló hangot. \n\n',...
+    '1 - hangmintában van emelkedő hangsor - "', KbName(keys.figPresent), '" billentyű \n',... 
+    '2 - hangmintában nincs emelkedő hangsor - "' ,KbName(keys.figAbsent), '" billentyű \n\n',...
     'Mindig akkor válaszoljon, amikor megjelenik a kérdőjel.\n\n',...
-    'Nyomja meg a SPACE billentyűt ha készen áll!'];    
+    'Nyomja meg a SPACE billentyűt ha készen áll!'];   
 
 % write instructions to text
 Screen('FillRect', win, backGroundColor);
@@ -385,7 +409,10 @@ disp([char(10), 'Subject signalled she/he is ready, we go ahead with the task'])
 Screen('FillRect', win, backGroundColor);
 Screen('Flip', win);
 
-for trialN = 1:trialMax
+trialN = 0; 
+SDestFlag = 0;
+while trialN < trialMax  || SDestFlag == 0
+    trialN = trialN + 1;
     
     % wait for releasing keys before going on
     releaseStart = GetSecs;
@@ -404,8 +431,8 @@ for trialN = 1:trialMax
         disp('There is no figure in this trial');
     end 
     
-    % if not first trial, update quest and prepare next stimulus
-    if trialN ~= 1
+    % update quest only after the first few trials
+    if trialN > qopt.ignoreTrials
         
         % if previous trial was with figure, update quest object
         if trialType(trialN-1) == 1
@@ -417,6 +444,11 @@ for trialN = 1:trialMax
             end
             q = QuestUpdate(q, tTest, questResp);
         end
+        
+    end
+    
+    % prepare next stimulus if not first trial
+    if trialN ~= 1    
         
         % if current trial is a catch trial, without figure, stimopt.figureCoh is set to zero
         % also, stimopt.toneComp just remains the last value it was set to
@@ -534,6 +566,17 @@ for trialN = 1:trialMax
     if ~isnan(respTime(trialN))
         disp(['Response time was ', num2str(respTime(trialN)), ' ms']);
     end    
+    
+    % get SD of current Quest estimate
+    SDest = QuestSd(q);
+    if SDest < mean(abs(diff(snrLogLevels))) || (trialN == (trialMax + trialExtraMax))
+        SDestFlag = 1;
+    else
+        SDestFlag = 0;
+    end
+    % user message
+    disp(['Standard deviation of threshold estimate is ', num2str(SDest),... 
+        ', (ideally < ', num2str(median(abs(diff(snrLogLevels)))), ')']);    
     
     % save logging/results variable
     save(saveF, 'q', 'respTime', 'figDetect', 'acc', 'trialType', 'cohRes',... 

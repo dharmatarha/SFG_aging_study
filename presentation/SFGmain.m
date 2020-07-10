@@ -96,8 +96,18 @@ if ~isequal(length(unique(fs)), 1)
 else
     fs = unique(fs);
 end
-% use default audio device
-device = [];
+
+% get correct audio device
+device = [];  % system default is our default as well
+% we only change audio device in the lab, when we see the correct audio
+% card
+tmpDevices = PsychPortAudio('GetDevices');
+for i = 1:numel(tmpDevices)
+    if strcmp(tmpDevices(i).DeviceName, 'ESI Juli@: ICE1724 (hw:2,0)')
+        device = tmpDevices(i).DeviceIndex;
+    end
+end
+
 % mode is simple playback
 mode = 1;
 % reqlatencyclass is set to low-latency
@@ -146,6 +156,7 @@ trig.trialStart = 200;
 trig.playbackStart = 210;
 trig.respPresent = 220;
 trig.respAbsent = 230;
+trig.l = 1000; % trigger length in microseconds
 
 % triggers for stimulus types, based on the number of unique stimulus types
 % we assume that stimTypes is a cell array (with headers) that contains the 
@@ -161,7 +172,7 @@ trigTypes = uniqueStimTypes+150;
 stimTypes = [stimTypes, [{'trigger'}; num2cell(trigTypes)]];
 
 % create triggers for stimulus types, for all trials
-trig.stimType = cell2mat(stimArray(:, 12))+150;
+trig.stimType = cell2mat(stimArray(:, 13))+150;
 
 % add triggers to logging / results variable
 logVar(2:end, strcmp(logHeader, 'trigger')) = num2cell(trig.stimType);
@@ -278,6 +289,9 @@ ListenChar(-1);
 % realtime priority
 Priority(1);
 
+% init parallel port control
+ppdev_mex('Open', 1);
+
 % user message
 disp([char(10), 'Initialized psychtoolbox basics, opened window, ',...
     'started PsychPortAudio device']);
@@ -286,15 +300,10 @@ disp([char(10), 'Initialized psychtoolbox basics, opened window, ',...
 %% Instructions phase
 
 % instructions text
-instrText = ['A feladat ugyanaz, mint a gyakorlás során -\n',... 
-    'jelezze, ha hall egy, a háttérből kiemelkedő hangot.\n\n',...
-    'A gyakorlás során egyre nehezedett a feladat, most \n',...
-    'viszont összekeverjük a hangokat. Egy könnyen \n',... 
-    'észrevehető hangot lehet, hogy egy nehezen detektálható\n',... 
-    'követ majd, vagy fordítva. \n\n',...
-    'Fontos! Mindig az "', KbName(keys.figPresent), '" gombbal jelezze, ha hallott \n',... 
-    'egy különálló hangot, és az "' ,KbName(keys.figAbsent), '" gombot nyomja meg ha \n',...
-    'nem hallott különálló hangot. \n\n',...
+instrText = ['A feladat ugyanaz lesz, mint az előző blokkok során - \n',... 
+    'jelezze, ha a hangmintában hall egy emelkedő hangsort.\n\n',...
+    '1 - hangmintában van emelkedő hangsor - "', KbName(keys.figPresent), '" billentyű \n',... 
+    '2 - hangmintában nincs emelkedő hangsor - "' ,KbName(keys.figAbsent), '" billentyű \n\n',...
     'Mindig akkor válaszoljon, amikor megjelenik a kérdőjel.\n\n',...
     'Nyomja meg a SPACE billentyűt ha készen áll!'];
 
@@ -321,6 +330,7 @@ while 1
     end
 end
 if abortFlag
+    ppdev_mex('Close', 1);
     ListenChar(0);
     Priority(0);
     RestrictKeysForKbCheck([]);
@@ -350,12 +360,9 @@ for block = startBlockNo:blockNo
     % fill a dynamic buffer with data for whole block
     % get trial index list for current block
     trialList = trialIdx(blockIdx==block);
-    if ~isequal(min(trialList), startTrialNo)
-        error([char(10), 'First trial of target block and preset trial start index do not match!']);
-    end
     buffer = [];
     for trial = min(trialList):max(trialList)
-        audioData = stimArray{trial, 11};
+        audioData = stimArray{trial, 12};
         buffer(end+1) = PsychPortAudio('CreateBuffer', [], audioData');
     end
 
@@ -391,6 +398,7 @@ for block = startBlockNo:blockNo
         end
     end
     if abortFlag
+        ppdev_mex('Close', 1);
         ListenChar(0);
         Priority(0);
         RestrictKeysForKbCheck([]);
@@ -414,6 +422,11 @@ for block = startBlockNo:blockNo
         Screen('DrawingFinished', win);
         trialStart = Screen('Flip', win); 
         
+        % trial start trigger
+        lptwrite(1, trig.trialStart, trig.l);
+        WaitSecs(0.005);
+        lptwrite(1, trig.stimType(trial), trig.l);
+        
         % user message
         disp([char(10), 'Starting trial ', num2str(trialCounterForBlock)]);
         if figStim(trial)
@@ -432,6 +445,7 @@ for block = startBlockNo:blockNo
         
         % blocking playback start for precision
         startTime = PsychPortAudio('Start', pahandle, 1, trialStart+iti(trial), 1);
+        lptwrite(1, trig.playbackStart, trig.l);
         
         % user message
         disp(['Audio started at ', num2str(startTime-trialStart), ' secs after trial start']);
@@ -457,10 +471,12 @@ for block = startBlockNo:blockNo
                 if find(keyCode) == keys.figPresent
                     figDetect(trial) = 1;
                     respFlag = 1;
+                    lptwrite(1, trig.respPresent, trig.l);
                     break;
                 elseif find(keyCode) == keys.figAbsent
                     figDetect(trial) = 0;
                     respFlag = 1;
+                    lptwrite(1, trig.respAbsent, trig.l);
                     break;
                 % if abort was requested    
                 elseif find(keyCode) == keys.abort
@@ -472,6 +488,7 @@ for block = startBlockNo:blockNo
         
         % if abort was requested, quit
         if abortFlag
+            ppdev_mex('Close', 1);
             ListenChar(0);
             Priority(0);
             RestrictKeysForKbCheck([]);
@@ -556,6 +573,7 @@ for block = startBlockNo:blockNo
             end
         end
         if abortFlag
+            ppdev_mex('Close', 1);
             ListenChar(0);
             Priority(0);
             RestrictKeysForKbCheck([]);
@@ -589,6 +607,7 @@ end  % block for loop
 disp(' ');
 disp('Got to the end!');
 
+ppdev_mex('Close', 1);
 ListenChar(0);
 Priority(0);
 RestrictKeysForKbCheck([]);

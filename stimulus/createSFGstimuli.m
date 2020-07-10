@@ -106,10 +106,10 @@ onsetOffsetRamp = [onsetRamp, ones(1, numberOfSamples  - 2*numberOfOnsetSamples)
 digits = ceil(log10(NStimuli + 1));
 
 % creating header for saved parameters
-outFile = cell(NStimuli+1, 10);
+outFile = cell(NStimuli+1, 11);
 outFile(1, :) = {'filename', 'totalDur', 'chordDur', 'chordOnset', ...
                  'figureDur', 'figureCoh', 'figureStepS', 'sampleFreq', ...
-                 'figureStartInterval', 'figureEndInterval'};
+                 'figureStartInterval', 'figureEndInterval', 'toneComp'};
 
 % create directory for saving audio data + parameters files
 c = clock;  % dir name based on current time
@@ -248,7 +248,7 @@ for stimNo = 1:NStimuli
     filename = strcat(wavDir, '-', temp, num2str(stimNo));
     outFile(stimNo+1, :) = {filename, stimopt.totalDur, stimopt.chordDur, stimopt.chordOnset, ...
                                  stimopt.figureDur, stimopt.figureCoh, stimopt.figureStepS, stimopt.sampleFreq, ...
-                                 figureStartInterval, figureEndInterval};
+                                 figureStartInterval, figureEndInterval, stimopt.toneComp};
     audiowrite(strcat('./', wavDir, '/', filename, '.wav'), soundOutput', stimopt.sampleFreq);    
     
     

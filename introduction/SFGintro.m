@@ -133,8 +133,17 @@ Screen('DrawLines', fixCrossWin, allCoords,...
 % Force costly mex functions into memory to avoid latency later on
 GetSecs; WaitSecs(0.1); KbCheck();
 
-% use default audio device
-device = [];
+% get correct audio device
+device = [];  % system default is our default as well
+% we only change audio device in the lab, when we see the correct audio
+% card
+tmpDevices = PsychPortAudio('GetDevices');
+for i = 1:numel(tmpDevices)
+    if strcmp(tmpDevices(i).DeviceName, 'ESI Juli@: ICE1724 (hw:2,0)')
+        device = tmpDevices(i).DeviceIndex;
+    end
+end
+
 % mode is simple playback
 mode = 1;
 % reqlatencyclass is set to low-latency

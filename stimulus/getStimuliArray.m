@@ -55,7 +55,7 @@ end
 % fields we expect in params files
 paramFields = {'filename', 'totalDur', 'chordDur', 'chordOnset', ...
                  'figureDur', 'figureCoh', 'figureStepS', 'sampleFreq', ...
-                 'figureStartInterval', 'figureEndInterval'};
+                 'figureStartInterval', 'figureEndInterval', 'toneComp'};
 
 % output variable collecting stimuli sets
 stimArray = cell(length(folders), 1);

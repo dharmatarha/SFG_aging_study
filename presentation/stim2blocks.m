@@ -61,7 +61,7 @@ disp([char(10), 'Called stim2blocks with input args: ',...
 
 %%%%%% HARD-CODED VALUES %%%%%
 % number of expected cell columns for the stimuli array
-stimFeaturesNo = 11;
+stimFeaturesNo = 12;
 % header for final stimTypes cell array (see the last code block)
 stimTypesHdr = {'figDuration', 'figCoherence', 'figPresence', 'stimulusTypeIndex'};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -89,14 +89,12 @@ disp([char(10), 'Loaded stimuli array, found ', num2str(trialNo), ' trials, ',..
 
 % get number of unique stimulus types based on figure presence/absence, 
 % coherence and duration
-durValues = cell2mat(stimArray(:, 6));
-cohValues = cell2mat(stimArray(:, 7));
-figPresent = stimArray(:, 5);
-% turn figPresent cell array of strings to numeric 0/1
-figPresentNum = zeros(length(figPresent), 1);
-figPresentNum(strcmp(figPresent, 'yes')) = 1;
+backgrValues = cell2mat(stimArray(:, 11));
+cohValues = cell2mat(stimArray(:, 6));
+figPresentNum = (cohValues~=0);
+
 % unique combinations
-[stimTypes, ~, stimTypeIdx] = unique([durValues, cohValues, figPresentNum], 'rows');
+[stimTypes, ~, stimTypeIdx] = unique([backgrValues, cohValues, figPresentNum], 'rows');
 
 % user message
 disp([char(10), 'There are ', num2str(size(stimTypes, 1)),... 
