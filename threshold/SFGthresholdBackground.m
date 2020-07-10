@@ -132,7 +132,7 @@ disp([char(10), 'Setting params for Quest and initializing the procedure']);
 % log SNR scale of possible stimuli, for Quest
 % levels are defined for background tone numbers as
 % 1:stimopt.toneComp-stimopt.figCoh
-backgroundLevels = stimopt.toneComp-baseCoherence:stimopt.toneComp*2;
+backgroundLevels = stimopt.toneComp-baseCoherence:stimopt.toneComp+10;  % HARDCODED MAX BACKGROUNDLEVEL
 snrLevels = baseCoherence./backgroundLevels;  % broadcasting in Matlab! :)
 snrLogLevels = log(snrLevels);
 
