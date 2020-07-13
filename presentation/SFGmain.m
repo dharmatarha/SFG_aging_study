@@ -93,6 +93,13 @@ else
     triggers = false;
 end
 
+% Workaround for a command window text display bug - too much printing to
+% command window results in garbled text, see e.g.
+% https://www.mathworks.com/matlabcentral/answers/325214-garbled-output-on-linux
+% Calling "clc" from time to time prevents the bug from making everything
+% unreadable
+clc;
+
 % user message
 disp([char(10), 'Called SFGmain (the main experimental function) with input args: ',...
     char(10), 'subNum: ', num2str(subNum),...
@@ -611,6 +618,13 @@ for block = startBlockNo:blockNo
     % if not last block
     if block ~= blockNo
         
+        % Workaround for a command window text display bug - too much printing to
+        % command window results in garbled text, see e.g.
+        % https://www.mathworks.com/matlabcentral/answers/325214-garbled-output-on-linux
+        % Calling "clc" from time to time prevents the bug from making everything
+        % unreadable
+        clc;
+        
         % user message
         disp([char(10), 'Block no. ', num2str(block), ' has ended,'... 
             'showing block-ending text']);
@@ -658,7 +672,7 @@ for block = startBlockNo:blockNo
         disp([char(10), 'The task has ended!!!']);
         
         % block ending text
-        blockEndText = ['Vége a feladatnak, köszönjük a részvételt!'];       
+        blockEndText = 'Vége a feladatnak, köszönjük a részvételt!';       
         % uniform background
         Screen('FillRect', win, backGroundColor);
         % draw block-starting text

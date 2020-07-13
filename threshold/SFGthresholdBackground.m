@@ -73,6 +73,13 @@ if ~exist('trialMax', 'var')
     trialMax = 80;
 end
 
+% Workaround for a command window text display bug - too much printing to
+% command window results in garbled text, see e.g.
+% https://www.mathworks.com/matlabcentral/answers/325214-garbled-output-on-linux
+% Calling "clc" from time to time prevents the bug from making everything
+% unreadable
+clc;
+
 % user message
 disp([char(10), 'Called function SFGthresholdBackground with inputs: ',...
      char(10), 'subNum: ', num2str(subNum),...
@@ -138,7 +145,7 @@ snrLogLevels = log(snrLevels);
 
 % settings for quest 
 qopt = struct;
-qopt.tGuess = -0.12;  % prior threshold guess, -0.12 equals an SNR of ~0.89
+qopt.tGuess = -0.51;  % prior threshold guess, -0.51 equals an SNR of ~0.60 at a coherence level of 9 and stimopt.toneComp=20
 qopt.tGuessSd = 5;  % SD of prior guess
 qopt.beta = 3.5;  % Weibull steepness, 3.5 is the default used for a wide range of stimuli 
 qopt.delta = 0.02;  % ratio of "blind" / "accidental" responses
