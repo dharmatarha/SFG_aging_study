@@ -1,4 +1,4 @@
-function plotChordsSingleStim_simpleLog(audioData, stimopt, allFigFreqs, allBackgrFreqs)
+function plotChordsSingleStimSimple(audioData, stimopt, allFigFreqs, allBackgrFreqs)
 %% Plot background + figure chords for SFG stimulus
 %
 % USAGE: plotChordsSingleStim(audioData, stimopt, allFigFreqs, allBackgrFreqs)
@@ -28,7 +28,7 @@ if nargin ~= 4
     error('Requires input args "audioData", "stimopt", "allFigFreqs" and "allBackgrFreqs"!');
 end
 
-disp([char(10), 'Called function plotChordsSingleStim with inputs: ',...
+disp([char(10), 'Called function plotChordsSingleStimSimple with inputs: ',...
      char(10), 'audioData: matrix sized ', num2str(size(audioData)),...
      char(10), 'allFigFreqs: matrix sized ', num2str(size(allFigFreqs)),...
      char(10), 'allBackgrFreqs: matrix sized ', num2str(size(allBackgrFreqs)),...
@@ -95,7 +95,7 @@ linX = [figStart-0.5, figEnd+0.5; figStart-0.5, figEnd+0.5];
 linY = log10([freqLimits(1)-1, freqLimits(1)-1; freqLimits(2)+600, freqLimits(2)+600]);
 line(linX, linY, 'Color', 'k', 'LineWidth', 2);
 % subplot details
-title('Background and figure chords used for SFG stimulus');
+% title('Background and figure chords used for SFG stimulus');
 xlabel('Chord number');
 ylabel('Log frequency');
 hold off;
@@ -127,8 +127,8 @@ set(gcf,'color','w');
 figureTitle = ['Coh_', num2str(figCoh), '__Dur_', num2str(figDur)];
 set(gcf, 'NumberTitle', 'off', 'Name', figureTitle);
 set(gca, 'FontSize', 14);
-set(gcf, 'Units', 'Normalized', 'OuterPosition', [0.1, 0.1, 0.9, 0.9]);
-
+% set(gcf, 'Units', 'Normalized', 'OuterPosition', [0.1, 0.1, 0.9, 0.9]);
+set(gcf, 'Units', 'Normalized', 'OuterPosition', [0.1, 0.1, 0.5, 0.9]);
 
 return
 
