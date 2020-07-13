@@ -335,6 +335,9 @@ ListenChar(-1);
 % realtime priority
 Priority(1);
 
+% minimum wait time for breaks in secs
+breakTimeMin = 120;
+
 if triggers
     % init parallel port control
     ppdev_mex('Open', 1);
@@ -612,22 +615,22 @@ for block = startBlockNo:blockNo
         save(subLogF, 'logVar');
         
     end  % trial for loop
+     
+    % Workaround for a command window text display bug - too much printing to
+    % command window results in garbled text, see e.g.
+    % https://www.mathworks.com/matlabcentral/answers/325214-garbled-output-on-linux
+    % Calling "clc" from time to time prevents the bug from making everything
+    % unreadable
+    clc;    
     
     
-    % feedback to subject
-    % if not last block
-    if block ~= blockNo
-        
-        % Workaround for a command window text display bug - too much printing to
-        % command window results in garbled text, see e.g.
-        % https://www.mathworks.com/matlabcentral/answers/325214-garbled-output-on-linux
-        % Calling "clc" from time to time prevents the bug from making everything
-        % unreadable
-        clc;
+    %% Feedback to subject at the end of block
+    % if not last block and not a break
+    if (block ~= blockNo) && (mod(block, 3) ~= 0)
         
         % user message
         disp([char(10), 'Block no. ', num2str(block), ' has ended,'... 
-            'showing block-ending text']);
+            'showing block-ending text to participant']);
         
         % block ending text
         blockEndText = ['Vége a(z) ', num2str(block), '. blokknak!\n\n\n',... 
@@ -665,6 +668,58 @@ for block = startBlockNo:blockNo
             return;
         end  
     
+    % if not last block and there is a break
+    elseif (block ~= blockNo) && (mod(block, 3) == 0)
+        
+        % user message
+        disp([char(10), 'Block no. ', num2str(block), ' has ended,'... 
+            'showing block-ending text to participant. \n\n', ...
+            'There is a BREAK now!']);
+        
+        % block ending text
+        blockEndText = ['Vége a(z) ', num2str(block), '. blokknak!\n\n\n',... 
+                'Ebben a blokkban a próbák ', num2str(round(blockAcc, 2)), '%-ra adott helyes választ.\n\n\n',... 
+                'Most tartunk egy rövid szünetet, a kísérletvezető hamarosan beszél Önnel.\n\n',...
+                'Ha szünet véget ért és készen áll a folytatásra, nyomja meg a SPACE billentyűt!\n',...
+                '(a következő blokk leghamarabb ', num2str(round(breakTimeMin/60)), ' perc szünet után indítható)'];
+        % uniform background
+        Screen('FillRect', win, backGroundColor);
+        % draw block-starting text
+        DrawFormattedText(win, blockEndText, 'center', 'center', textColor);   
+        blockEndTextFlip = Screen('Flip', win);
+        
+        % approximate wait time 
+        
+        % wait for key press to start
+        while 1
+            [keyIsDown, ~, keyCode] = KbCheck;
+            if keyIsDown 
+                % if subject is ready to start
+                if find(keyCode) == keys.go
+                    if GetSecs > (blockEndTextFlip+breakTimeMin)
+                        break;
+                    end
+                % if abort was requested    
+                elseif find(keyCode) == keys.abort
+                    abortFlag = 1;
+                    break
+                end
+            end
+        end
+        if abortFlag
+            if triggers
+                ppdev_mex('Close', 1);
+            end
+            ListenChar(0);
+            Priority(0);
+            RestrictKeysForKbCheck([]);
+            PsychPortAudio('Close');
+            Screen('CloseAll');
+            ShowCursor(screenNumber);
+            return;
+        end      
+        
+        
     % if last block ended now   
     elseif block == blockNo
  
@@ -681,10 +736,13 @@ for block = startBlockNo:blockNo
         
         WaitSecs(5);
         
-    end        
-            
-end  % block for loop
+    end  % if block       
+         
     
+end  % block for loop
+
+
+%% Ending, cleaning up
 
 disp(' ');
 disp('Got to the end!');
