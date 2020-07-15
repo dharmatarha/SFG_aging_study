@@ -1,12 +1,12 @@
 function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocksTraining(stimArrayFile, seqFeatures)
-%% Helper function sorting stimuli to training sequences
+%% Helper function sorting stimuli to training blocks
 %
 % USAGE: [blockIdx, stimTypes, stimTypeIdx, stimArray] = 
 %           stim2blocksTraining(stimArrayFile, seqFeatures=[10,12; 10,11; 10,10; 10,9; 10,8; 10,7])
 %
 % For training phase of stochastic figure-ground (SFG) experiment. 
 % The function examines the stimuli array for unique stimuli types and 
-% creates sequences containing the different types, as used for training. 
+% creates blocks containing the different types, as used for training. 
 % Returns block and trial indices for each stimulus.
 %
 %
@@ -15,8 +15,8 @@ function [blockIdx, stimTypes, stimTypeIdx, stimArray, trialIdx] = stim2blocksTr
 %               stimuli + features (size: no. of stimuli X 11 columns)
 % seqFeatures   - Matrix with figure duration (column one) and coherence 
 %               values (column two). Each row specifies the duration and
-%               coherence values needed for sequence. Row index corresponds
-%               to sequence number. Aim is to imitate the training setup
+%               coherence values needed for block. Row index corresponds
+%               to block number. Aim is to imitate the training setup
 %               used in (Toth et al., 2016, EEG signatures accompanying...)
 %               Defaults to [10,12; 10,11; 10,10; 10,9; 10,8; 10,7]
 %               
@@ -54,9 +54,9 @@ end
 if ~exist(stimArrayFile, 'file')
     error('Cannot find input arg "stimArrayFile"!');
 end
-% number of sequences
+% number of blocks
 if ~ismembertol(size(seqFeatures, 1), 1:50)
-    error('Number of training sequences should be between 1 - 50!');
+    error('Number of training blocks should be between 1 - 50!');
 end
 
 % user message
@@ -69,7 +69,7 @@ disp(num2str(seqFeatures));
 
 %% Loading stimuli, sanity checks
 
-% number of stimulus blocks = number of training sequences = rows of
+% number of stimulus blocks = number of training blocks = rows of
 % seqFeatures
 blockNo = size(seqFeatures, 1);
 
@@ -91,12 +91,12 @@ trialNo = size(stimArray, 1);
 % sanity check - trials/blocks == integer?
 if mod(trialNo/blockNo, 1) ~= 0
     error(['Number of trials (', num2str(trialNo), ', based on stimuli',... 
-        'array) is incompatible with the number of sequences (', num2str(blockNo), ') requested']);
+        'array) is incompatible with the number of blocks (', num2str(blockNo), ') requested']);
 end
 
 % user message
 disp([char(10), 'Loaded stimuli array, found ', num2str(trialNo), ' trials, ',...
-    char(10), 'each stimulus block (=training sequence) will contain ', num2str(trialNo/blockNo), ' trials']);
+    char(10), 'each stimulus block will contain ', num2str(trialNo/blockNo), ' trials']);
 
 
 %% Get unique stimulus types
@@ -106,12 +106,6 @@ disp([char(10), 'Loaded stimuli array, found ', num2str(trialNo), ' trials, ',..
 durValues = cell2mat(stimArray(:, 5));
 cohValues = cell2mat(stimArray(:, 6));
 figPresent = cohValues~=0;  % where coherence is 0, there is no figure
-
-% % focus only on stimuli with figure
-% durValuesFig = durValues;
-% durValuesFig(~figPresent) = [];
-% cohValuesFig = cohValues;
-% cohValuesFig(~figPresent) = [];
 
 % unique combinations for stimuli with figure
 [stimTypes, ~, stimTypeIdx] = unique([durValues, cohValues], 'rows');
@@ -165,7 +159,7 @@ end
 blockIdx = nan(trialNo, 1); % block index for each stimulus
 for seq = 1:blockNo
     % which unique figure type corresponds to the features of the current
-    % sequence (duration + coherence value)
+    % block (duration + coherence value)
     idx = find(ismember(stimTypes(:, 1:2), seqFeatures(seq,:), 'rows'));
     % go through the duration and coherence values of all trials, look for
     % the ones with the current stimType

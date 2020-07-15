@@ -241,11 +241,11 @@ keys.abort = KbName('ESCAPE');
 keys.go = KbName('SPACE');
 % counterbalancing response side across subjects, based on subject number
 if mod(subNum, 2) == 0
-    keys.figPresent = KbName('l');
+    keys.figPresent = KbName('j');
     keys.figAbsent = KbName('s');
 else
     keys.figPresent = KbName('s');
-    keys.figAbsent = KbName('l');
+    keys.figAbsent = KbName('j');
 end
 
 % restrict keys to the ones we use
@@ -274,7 +274,7 @@ ifi = Screen('GetFlipInterval', win);
 Screen('BlendFunction', win, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 % Setup the text type for the window
 Screen('TextFont', win, 'Ariel');
-Screen('TextSize', win, 26);
+Screen('TextSize', win, 30);
 
 % set up a central fixation cross into a texture / offscreen window
 % get the centre coordinate of the window
@@ -353,8 +353,8 @@ disp([char(10), 'Initialized psychtoolbox basics, opened window, ',...
 % instructions text
 instrText = ['A feladat ugyanaz lesz, mint az előző blokkok során - \n',... 
     'jelezze, ha a hangmintában hall egy emelkedő hangsort.\n\n',...
-    '1 - hangmintában van emelkedő hangsor - "', KbName(keys.figPresent), '" billentyű \n',... 
-    '2 - hangmintában nincs emelkedő hangsor - "' ,KbName(keys.figAbsent), '" billentyű \n\n',...
+    'Hangmintában van emelkedő hangsor - "', KbName(keys.figPresent), '" billentyű. \n',... 
+    'Hangmintában nincs emelkedő hangsor - "' ,KbName(keys.figAbsent), '" billentyű. \n\n',...
     'Mindig akkor válaszoljon, amikor megjelenik a kérdőjel.\n\n',...
     'Nyomja meg a SPACE billentyűt ha készen áll!'];
 
@@ -628,9 +628,14 @@ for block = startBlockNo:blockNo
     % if not last block and not a break
     if (block ~= blockNo) && (mod(block, 3) ~= 0)
         
-        % user message
+        % false alarm rate in block
+        blockFalseAlarm = (acc(trial-trialCounterForBlock+1:trial)==0 &... 
+            figStim(trial-trialCounterForBlock+1:trial)==0)/trialCounterForBlock*100;
+        % user messages
         disp([char(10), 'Block no. ', num2str(block), ' has ended,'... 
             'showing block-ending text to participant']);
+        disp([char(10), 'Overall accuracy in block was ', num2str(blockAcc),... 
+            '%; false alarm rate was ', num2str(blockFalseAlarm), '%']);
         
         % block ending text
         blockEndText = ['Vége a(z) ', num2str(block), '. blokknak!\n\n\n',... 

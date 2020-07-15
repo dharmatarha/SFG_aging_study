@@ -32,9 +32,9 @@ function SFGtraining(subNum, stimArrayFile)
 % logHeader={'subNum', 'blockNo', 'trialNo', 'stimNo', 'figDuration',... 
 %     'figCoherence', 'figPresence', 'figStartChord', 'figEndChord', 'figStepS',... 
 %     'accuracy', 'buttonResponse', 'respTime', 'iti', 'trialStart', 'soundOnset',... 
-%     'figureStart', 'respIntervalStart', 'trigger'};
+%     'figureStart', 'respIntervalStart'};
 %
-%
+
 
 %% Input checks
 
@@ -52,6 +52,13 @@ end
 if ~exist(stimArrayFile, 'file')
     error(['Cannot find stimulus file at ', stimArrayFile, '!']);
 end
+
+% Workaround for a command window text display bug - too much printing to
+% command window results in garbled text, see e.g.
+% https://www.mathworks.com/matlabcentral/answers/325214-garbled-output-on-linux
+% Calling "clc" from time to time prevents the bug from making everything
+% unreadable
+clc;
 
 % user message
 disp([char(10), 'Called SFG training function with input args: ',...
@@ -100,7 +107,7 @@ disp([char(10), 'Initializing a logging variable']);
 logHeader={'subNum', 'blockNo', 'trialNo', 'stimNo', 'figDuration',... 
     'figCoherence', 'figPresence', 'figStartChord', 'figEndChord', 'figStepS',... 
     'accuracy', 'buttonResponse', 'respTime', 'iti', 'trialStart', 'soundOnset',... 
-    'figureStart', 'respIntervalStart', 'trigger'};
+    'figureStart', 'respIntervalStart'};
 % empty cell array, insert header
 logVar = cell(size(stimArray, 1)+1, size(logHeader, 2));
 logVar(1, :) = logHeader;
@@ -122,11 +129,11 @@ disp([char(10), 'Ready to start the experiment']);
 
 %% Set starting point
 
-disp([char(10), 'There are trials pre-sorted for sequences:']);
+disp([char(10), 'There are trials pre-sorted for blocks:']);
 disp(num2str(unique(blockIdx)'));
-inpRes = input([char(10), 'Which training sequence do we start from? Just type 1 if you do not know!', char(10)]);
+inpRes = input([char(10), 'Which training block do we start from? Just type 1 if you do not know!', char(10)]);
 if ismember(inpRes, unique(blockIdx)')
-    disp([char(10), 'Got it, we start from training sequence ', num2str(inpRes), char(10)]);
+    disp([char(10), 'Got it, we start from training block ', num2str(inpRes), char(10)]);
     startBlockNo = inpRes;
 else
     disp([char(10), 'Not a valid answer, we exit to be rather safe than sorry', char(10)]);
@@ -169,7 +176,7 @@ nrChannels = 2;
 disp([char(10), 'Set audio parameters']);
 
 
-%% Stimulus features for triggers + logging
+%% Stimulus features for logging
 
 % get figure presence/absence variable for stimuli
 figStim = cell2mat(logVar(2:end, strcmp(logHeader, 'figPresence')));
@@ -198,38 +205,6 @@ end
 disp([char(10), 'Extracted stimulus features']);
 
 
-%% Triggers
-
-% basic triggers for trial start, sound onset and response
-trig = struct;
-trig.trialStart = 200;
-trig.playbackStart = 210;
-trig.respPresent = 220;
-trig.respAbsent = 230;
-
-% triggers for stimulus types, based on the number of unique stimulus types
-% we assume that stimTypes is a cell array (with headers) that contains the 
-% unique stimulus feature combinations, with an index for each combination 
-% in the last column
-uniqueStimTypes = cell2mat(stimTypes(2:end,end));
-if length(uniqueStimTypes) > 49
-    error('Too many stimulus types for properly triggering them');
-end
-% triggers for stimulus types are integers in the range 151-199
-trigTypes = uniqueStimTypes+150;
-% add trigger info to stimTypes cell array as an extra column
-stimTypes = [stimTypes, [{'trigger'}; num2cell(trigTypes)]];
-
-% create triggers for stimulus types, for all trials
-trig.stimType = cell2mat(stimArray(:, 12))+150;
-
-% add triggers to logging / results variable
-logVar(2:end, strcmp(logHeader, 'trigger')) = num2cell(trig.stimType);
-
-% user message
-disp([char(10), 'Set up triggers']);
-
-
 %% Psychtoolbox initialization
 
 % General init (AssertOpenGL, 'UnifyKeyNames')
@@ -244,11 +219,11 @@ keys.abort = KbName('ESCAPE');
 keys.go = KbName('SPACE');
 % counterbalancing response side across subjects, based on subject number
 if mod(subNum, 2) == 0
-    keys.figPresent = KbName('l');
+    keys.figPresent = KbName('j');
     keys.figAbsent = KbName('s');
 else
     keys.figPresent = KbName('s');
-    keys.figAbsent = KbName('l');
+    keys.figAbsent = KbName('j');
 end
 
 % restrict keys to the ones we use
@@ -277,7 +252,7 @@ ifi = Screen('GetFlipInterval', win);
 Screen('BlendFunction', win, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 % Setup the text type for the window
 Screen('TextFont', win, 'Ariel');
-Screen('TextSize', win, 26);
+Screen('TextSize', win, 30);
 
 % set up a central fixation cross into a texture / offscreen window
 % get the centre coordinate of the window
@@ -357,16 +332,16 @@ disp([char(10), 'Initialized psychtoolbox basics, opened window, ',...
 %% Instructions phase
 
 % instructions text
-instrText = ['A feladat során néha csak egy összevissza változó hangot\n',... 
-    'hall majd, néha viszont kiemelkedik egy hang ebből a háttérből.\n\n',...
-    'Most ezt fogja gyakorolni rövid blokkokban. Minden blokkban\n',...
-    'tíz hangot hall majd. Kérjük, minden hang után jelezze, hogy \n',... 
-    'hallott-e egy háttérből kiemelkedő hangot vagy sem. \n\n',...
-    'Hat blokkot fog végighallgatni, és ezek egyre nehezebbek lesznek.\n\n',...
-    'Fontos! Mindig az "', KbName(keys.figPresent), '" gombbal jelezze, ha hallott \n',... 
-    'egy különálló hangot, és az "' ,KbName(keys.figAbsent), '" gombot nyomja meg ha \n',...
-    'nem hallott különálló hangot. \n\n',...
-    'Mindig akkor válaszoljon, amikor megjelenik a kérdőjel.\n\n',...
+instrText = ['A feladatot rövid blokkokban fogjuk elvégezni.\n\n',...
+    'Először hat gyakorló blokk következik, ezek egyre nehezebbek lesznek. \n',... 
+    'Minden blokkban tíz hangot hall majd. \n\n',...
+    'A hangminták fele tartalmaz emelkedő hangsort, a másik fele nem. \n',...
+    'Kérjük, minden hangminta után gombnyomással jelezze, hogy hallott-e a hangmintában \n',... 
+    'emelkedő hangsort vagy sem. A képernyőn minden gombnyomást követően megjelenik majd, \n',...
+    'hogy a válasz helyes volt-e.\n\n',...
+    'Hangmintában van emelkedő hangsor  -  "', KbName(keys.figPresent), '" billentyű. \n',...
+    'Hangmintában nincs emelkedő hangsor  -  "', KbName(keys.figPresent), '" billentyű. \n\n',...
+    'Mindig akkor válaszoljon, amikor megjelenik a kérdőjel. \n',...
     'Nyomja meg a SPACE billentyűt ha készen áll!'];
 
 % write instructions to text

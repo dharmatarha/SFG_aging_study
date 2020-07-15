@@ -6,7 +6,7 @@ function SFGthresholdCoherence(subNum, varargin)
 % The procedure changes the coherence level using the adaptive staircase
 % procedure QUEST. Fixed trial + QuestSd check approach, that is, the
 % function checks QuestSd after a fixed number of trials (=trialMax), and
-% runs for an additional number of trials (trialExtraMaX, hardcoded!) if  
+% runs for an additional number of trials ("trialExtraMax", hardcoded!) if  
 % the standard deviation is under a predefined threshold 
 % (median(abs(diff(snrLogLevels)))).
 %
@@ -140,10 +140,13 @@ q = QuestCreate(qopt.tGuess, qopt.tGuessSd, qopt.pThreshold,...
 % first few trials are not used for updating the Quest object (due to
 % unfamiliarity with the task in the beginning), we set a variable
 % controlling the number of trials to ignore:
-qopt.ignoreTrials = 5;  % must be > 0 
+qopt.ignoreTrials = 6;  % must be > 0 
 
 % maximum number of extra trials when Quest estimate SD is too large
 trialExtraMax = 20;
+
+% target value for QuestSd - the staircase stops if this level is reached
+questSDtarget = median(abs(diff(snrLogLevels)));
 
 % user message
 disp('Done with Quest init');
@@ -166,11 +169,11 @@ keys.abort = KbName('ESCAPE');
 keys.go = KbName('SPACE');
 % counterbalancing response side across subjects, based on subject number
 if mod(subNum, 2) == 0
-    keys.figPresent = KbName('l');
+    keys.figPresent = KbName('j');
     keys.figAbsent = KbName('s');
 else
     keys.figPresent = KbName('s');
-    keys.figAbsent = KbName('l');
+    keys.figAbsent = KbName('j');
 end
 
 % restrict keys to the ones we use
@@ -199,7 +202,7 @@ ifi = Screen('GetFlipInterval', win);
 Screen('BlendFunction', win, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 % Setup the text type for the window
 Screen('TextFont', win, 'Ariel');
-Screen('TextSize', win, 26);
+Screen('TextSize', win, 30);
 
 % set up a central fixation cross into a texture / offscreen window
 % get the centre coordinate of the window
@@ -339,8 +342,8 @@ instrText = ['A következő blokkokban ugyanaz lesz a feladata, mint a gyakorlá
     'de gombnyomást követően nem jelenik majd meg a képernyőn hogy a válasz helyes volt-e.\n\n',...
     'Összesen ', num2str(trialMax), ' hangmintát fogunk lejátszani Önnek, \n',...
     'a feladat kb. ', num2str(round(trialMax/9)), ' percen át fog tartani.\n\n',...
-    '1 - hangmintában van emelkedő hangsor - "', KbName(keys.figPresent), '" billentyű \n',... 
-    '2 - hangmintában nincs emelkedő hangsor - "' ,KbName(keys.figAbsent), '" billentyű \n\n',...
+    'Hangmintában van emelkedő hangsor  -  "', KbName(keys.figPresent), '" billentyű. \n',... 
+    'Hangmintában nincs emelkedő hangsor  -  "' ,KbName(keys.figAbsent), '" billentyű. \n\n',...
     'Mindig akkor válaszoljon, amikor megjelenik a kérdőjel.\n\n',...
     'Nyomja meg a SPACE billentyűt ha készen áll!'];    
 
@@ -386,9 +389,11 @@ disp([char(10), 'Subject signalled she/he is ready, we go ahead with the task'])
 Screen('FillRect', win, backGroundColor);
 Screen('Flip', win);
 
-trialN = 0; 
-SDestFlag = 0;
-while trialN < trialMax  || SDestFlag == 0
+% trial loop is a while loop, so we can add trials depending on the level
+% of QuestSd reached
+trialN = 0;  % trial counter
+SDestFlag = 0;  % flag for reaching QuestSd target
+while trialN < trialMax  || (SDestFlag == 0 && trialN < (trialMax+trialExtraMax))
     trialN = trialN + 1;
     
     % wait for releasing keys before going on
@@ -540,24 +545,32 @@ while trialN < trialMax  || SDestFlag == 0
     
     % get SD of current Quest estimate
     SDest = QuestSd(q);
-    if SDest < median(abs(diff(snrLogLevels))) || (trialN == (trialMax + trialExtraMax))
+    if SDest < questSDtarget
         SDestFlag = 1;
     else
         SDestFlag = 0;
     end
     % user message
     disp(['Standard deviation of threshold estimate is ', num2str(SDest),... 
-        ', (ideally < ', num2str(median(abs(diff(snrLogLevels)))), ')']);
+        ', (ideally < ', num2str(questSDtarget), ')']);
     
     % save logging/results variable
     save(saveF, 'q', 'respTime', 'figDetect', 'acc', 'trialType',... 
         'trialMax', 'stimopt', 'qopt', 'cohLevels', 'snrLogLevels',... 
-        'snrLevels');
+        'snrLevels'); 
+    
+    % user message for adding extra trials if QuestSd did not reach target
+    % by trialMax
+    if trialN == trialMax && ~SDestFlag
+        disp([char(10), char(10), 'Standard deviation of threshold estimate is too large,',... 
+            char(10), 'we add extra trials (max ', num2str(trialExtraMax), ' trials) ',... 
+            'to derive a more accurate estimate']);
+    end  
     
     % wait a bit before next trial
     WaitSecs(0.4);
     
-end
+end  % trial while loop
 
 
 %% Final Quest object update if last trial was with figure present
@@ -601,16 +614,17 @@ DrawFormattedText(win, blockEndText, 'center', 'center', textColor);
 Screen('Flip', win);
 
 % final user messages about accuracy
-hitRate = sum(acc==1 & trialType==1)/(trialMax/2);
-falseAlarmRate = sum(acc==0 & trialType==0)/(trialMax/2);
-disp([char(10), 'Participant''s ratio of correct responses for trials',...
+hitRate = sum(acc==1 & trialType==1)/(trialN/2);
+falseAlarmRate = sum(acc==0 & trialType==0)/(trialN/2);
+disp([char(10), char(10), '%%%%%%  IMPORTANT INFO  %%%%%%']);
+disp(['Participant''s ratio of correct responses for trials',...
     char(10), 'with figures (hit rate) was ', num2str(hitRate)]);
 disp([char(10), 'Participant''s ratio of detection ("figure present") responses for trials',...
     char(10), 'without figures (false alarm rate) was ', num2str(falseAlarmRate), ...
-    '.', char(10) 'Consider re-running the thresholding procedure if ',...
-    'the latter number is too high (>0.25)!']);
+    '.', char(10) 'RERUN THE THRESHOLDING PROCEDURE IF THE FALSE ALARM RATE IS ABOVE 0.25!!!']);
+disp(['%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%', char(10), char(10)]);
 
-% saving resutls with extra info
+% saving results with extra info
 save(saveF, 'q', 'respTime', 'figDetect', 'acc', 'trialType',... 
     'trialMax', 'stimopt', 'qopt', 'cohLevels', 'snrLogLevels',...
     'snrLevels', 'coherenceEst', 'hitRate', 'falseAlarmRate');
