@@ -120,6 +120,10 @@ disp([char(10), 'Loading params and stimuli, checking ',...
     logVar, subLogF, returnFlag,... 
     logHeader, stimTypes] = expParamsHandler(subNum, stimArrayFile, blockNo);
 
+%%%%%%%%%%%%%%%%%%%%%% HARDCODED BREAKS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+breakBlocks = [4, 7];
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % if there was early return from expParamsHandler.m, abort
 if returnFlag
     return
@@ -234,6 +238,15 @@ PsychDefaultSetup(1);
 
 % init PsychPortAudio with pushing for lowest possible latency
 InitializePsychSound(1);
+
+% Keyboard params - names
+KbNameSub = 'Logitech USB Keyboard';
+KbNameExp = 'CASUE USB KB';
+% detect attached devices
+[keyboardIndices, productNames, ~] = GetKeyboardIndices;
+% define subject's and experimenter keyboards
+KbIdxSub = keyboardIndices(ismember(productNames, KbNameSub));
+KbIdxExp = keyboardIndices(ismember(productNames, KbNameExp));
 
 % Define the specific keys we use
 keys = struct;
@@ -368,15 +381,20 @@ disp([char(10), 'Showing the instructions text right now...']);
 
 % wait for key press to start
 while 1
-    [keyIsDown, ~, keyCode] = KbCheck;
-    if keyIsDown 
+    [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+    [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
+    % subject key down
+    if keyIsDownSub 
         % if subject is ready to start
-        if find(keyCode) == keys.go
+        if find(keyCodeSub) == keys.go
             break;
+        end
+    % experimenter key down    
+    elseif keyIsDownExp
         % if abort was requested    
-        elseif find(keyCode) == keys.abort
+        if find(keyCodeExp) == keys.abort
             abortFlag = 1;
-            break
+            break;
         end
     end
 end
@@ -438,15 +456,20 @@ for block = startBlockNo:blockNo
     Screen('Flip', win);
     % wait for key press to start
     while 1
-        [keyIsDown, ~, keyCode] = KbCheck;
-        if keyIsDown 
+        [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+        [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
+        % subject key down
+        if keyIsDownSub 
             % if subject is ready to start
-            if find(keyCode) == keys.go
+            if find(keyCodeSub) == keys.go
                 break;
+            end
+        % experimenter key down    
+        elseif keyIsDownExp
             % if abort was requested    
-            elseif find(keyCode) == keys.abort
+            if find(keyCodeExp) == keys.abort
                 abortFlag = 1;
-                break
+                break;
             end
         end
     end
@@ -533,10 +556,12 @@ for block = startBlockNo:blockNo
         % wait for response
         respFlag = 0;
         while GetSecs-(startTime+stimLength) <= respInt
-            [keyIsDown, respSecs, keyCode] = KbCheck;
-            if keyIsDown
+            [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+            [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
+            % subject key down
+            if keyIsDownSub
                 % if subject responded figure presence/absence
-                if find(keyCode) == keys.figPresent
+                if find(keyCodeSub) == keys.figPresent
                     figDetect(trial) = 1;
                     respFlag = 1;
                     % response trigger
@@ -544,7 +569,7 @@ for block = startBlockNo:blockNo
                         lptwrite(1, trig.respPresent, trig.l);
                     end
                     break;
-                elseif find(keyCode) == keys.figAbsent
+                elseif find(keyCodeSub) == keys.figAbsent
                     figDetect(trial) = 0;
                     respFlag = 1;
                     % response trigger
@@ -552,10 +577,13 @@ for block = startBlockNo:blockNo
                         lptwrite(1, trig.respAbsent, trig.l);
                     end
                     break;
+                end
+            % experimenter key down    
+            elseif keyIsDownExp
                 % if abort was requested    
-                elseif find(keyCode) == keys.abort
+                if find(keyCodeExp) == keys.abort
                     abortFlag = 1;
-                    break
+                    break;
                 end
             end
         end
@@ -623,19 +651,20 @@ for block = startBlockNo:blockNo
     % unreadable
     clc;    
     
+    % false alarm rate in block
+    blockFalseAlarm = (acc(trial-trialCounterForBlock+1:trial)==0 &... 
+        figStim(trial-trialCounterForBlock+1:trial)==0)/trialCounterForBlock*100;
+    % user messages
+    disp([char(10), 'Block no. ', num2str(block), ' has ended,'... 
+        'showing block-ending text to participant']);
+    disp([char(10), 'Overall accuracy in block was ', num2str(blockAcc),... 
+        '%; false alarm rate was ', num2str(blockFalseAlarm), '%']);    
+    
     
     %% Feedback to subject at the end of block
     % if not last block and not a break
-    if (block ~= blockNo) && (mod(block, 3) ~= 0)
+    if (block ~= blockNo) && ~ismembertol(block, breakBlocks)
         
-        % false alarm rate in block
-        blockFalseAlarm = (acc(trial-trialCounterForBlock+1:trial)==0 &... 
-            figStim(trial-trialCounterForBlock+1:trial)==0)/trialCounterForBlock*100;
-        % user messages
-        disp([char(10), 'Block no. ', num2str(block), ' has ended,'... 
-            'showing block-ending text to participant']);
-        disp([char(10), 'Overall accuracy in block was ', num2str(blockAcc),... 
-            '%; false alarm rate was ', num2str(blockFalseAlarm), '%']);
         
         % block ending text
         blockEndText = ['Vége a(z) ', num2str(block), '. blokknak!\n\n\n',... 
@@ -648,15 +677,20 @@ for block = startBlockNo:blockNo
         Screen('Flip', win);
         % wait for key press to start
         while 1
-            [keyIsDown, ~, keyCode] = KbCheck;
-            if keyIsDown 
+            [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+            [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
+            % subject key down
+            if keyIsDownSub 
                 % if subject is ready to start
-                if find(keyCode) == keys.go
+                if find(keyCodeSub) == keys.go
                     break;
+                end
+            % experimenter key down    
+            elseif keyIsDownExp
                 % if abort was requested    
-                elseif find(keyCode) == keys.abort
+                if find(keyCodeExp) == keys.abort
                     abortFlag = 1;
-                    break
+                    break;
                 end
             end
         end
@@ -674,40 +708,38 @@ for block = startBlockNo:blockNo
         end  
     
     % if not last block and there is a break
-    elseif (block ~= blockNo) && (mod(block, 3) == 0)
+    elseif (block ~= blockNo) && ismembertol(block, breakBlocks)
         
         % user message
         disp([char(10), 'Block no. ', num2str(block), ' has ended,'... 
             'showing block-ending text to participant. \n\n', ...
             'There is a BREAK now!']);
+        disp('Only the experimenter can start the next block!');
         
         % block ending text
         blockEndText = ['Vége a(z) ', num2str(block), '. blokknak!\n\n\n',... 
                 'Ebben a blokkban a próbák ', num2str(round(blockAcc, 2)), '%-ra adott helyes választ.\n\n\n',... 
-                'Most tartunk egy rövid szünetet, a kísérletvezető hamarosan beszél Önnel.\n\n',...
-                'Ha szünet véget ért és készen áll a folytatásra, nyomja meg a SPACE billentyűt!\n',...
-                '(a következő blokk leghamarabb ', num2str(round(breakTimeMin/60)), ' perc szünet után indítható)'];
+                'Most tartunk egy rövid szünetet, a kísérletvezető hamarosan beszél Önnel.'];
         % uniform background
         Screen('FillRect', win, backGroundColor);
         % draw block-starting text
         DrawFormattedText(win, blockEndText, 'center', 'center', textColor);   
-        blockEndTextFlip = Screen('Flip', win);
+        Screen('Flip', win);
         
         % approximate wait time 
         
         % wait for key press to start
         while 1
-            [keyIsDown, ~, keyCode] = KbCheck;
-            if keyIsDown 
+            [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
+            % experimenter key down
+            if keyIsDownExp 
                 % if subject is ready to start
-                if find(keyCode) == keys.go
-                    if GetSecs > (blockEndTextFlip+breakTimeMin)
-                        break;
-                    end
+                if find(keyCodeExp) == keys.go
+                    break;
                 % if abort was requested    
-                elseif find(keyCode) == keys.abort
+                elseif find(keyCodeExp) == keys.abort
                     abortFlag = 1;
-                    break
+                    break;
                 end
             end
         end
@@ -732,7 +764,9 @@ for block = startBlockNo:blockNo
         disp([char(10), 'The task has ended!!!']);
         
         % block ending text
-        blockEndText = 'Vége a feladatnak, köszönjük a részvételt!';       
+        blockEndText = ['Vége a feladatnak!\n',...
+            'Az utolsó blokkban a próbák ', num2str(round(blockAcc, 2)), '%-ra adott helyes választ.\n\n',...
+            'Köszönjük a részvételt!'];       
         % uniform background
         Screen('FillRect', win, backGroundColor);
         % draw block-starting text

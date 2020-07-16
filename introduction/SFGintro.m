@@ -81,6 +81,15 @@ PsychDefaultSetup(1);
 % init PsychPortAudio with pushing for lowest possible latency
 InitializePsychSound(1);
 
+% Keyboard params - names
+KbNameSub = 'Logitech USB Keyboard';
+KbNameExp = 'CASUE USB KB';
+% detect attached devices
+[keyboardIndices, productNames, ~] = GetKeyboardIndices;
+% define subject's and experimenter keyboards
+KbIdxSub = keyboardIndices(ismember(productNames, KbNameSub));
+KbIdxExp = keyboardIndices(ismember(productNames, KbNameExp));
+    
 % Define the specific keys we use
 keys = struct;
 keys.abort = KbName('ESCAPE');
@@ -218,20 +227,29 @@ disp([char(10), 'Showing the instructions text right now...']);
 
 % wait for key press to start
 while 1
-    [keyIsDown, ~, keyCode] = KbCheck;
-    if keyIsDown 
+    [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+    [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
+    % subject key down
+    if keyIsDownSub 
         % if subject requested stimulus with figure
-        if find(keyCode) == keys.figPresent
+        if find(keyCodeSub) == keys.figPresent
             nextTrial = 1;
             break;
         % if subject requested stimulus with no figure
-        elseif find(keyCode) == keys.figAbsent
+        elseif find(keyCodeSub) == keys.figAbsent
             nextTrial = 0;
-            break;            
+            break;  
         % if abort was requested    
-        elseif find(keyCode) == keys.abort
+        elseif find(keyCodeSub) == keys.abort
             abortFlag = 1;
-            break
+            break;
+        end        
+    % experimenter key down  
+    elseif keyIsDownExp
+        % if abort was requested    
+        if find(keyCodeExp) == keys.abort
+            abortFlag = 1;
+            break;
         end
     end
 end
@@ -307,20 +325,29 @@ while 1  % until abort is requested
 
     % wait for key press to go on to next stimulus
     while 1
-        [keyIsDown, ~, keyCode] = KbCheck;
-        if keyIsDown 
+        [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+        [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
+        % subject key down
+        if keyIsDownSub 
             % if subject requested stimulus with figure
-            if find(keyCode) == keys.figPresent
+            if find(keyCodeSub) == keys.figPresent
                 nextTrial = 1;
                 break;
             % if subject requested stimulus with no figure
-            elseif find(keyCode) == keys.figAbsent
+            elseif find(keyCodeSub) == keys.figAbsent
                 nextTrial = 0;
-                break;            
+                break;  
             % if abort was requested    
-            elseif find(keyCode) == keys.abort
+            elseif find(keyCodeSub) == keys.abort
                 abortFlag = 1;
-                break
+                break;
+            end            
+        % experimenter key down    
+        elseif keyIsDownExp
+            % if abort was requested    
+            if find(keyCodeExp) == keys.abort
+                abortFlag = 1;
+                break;
             end
         end
     end

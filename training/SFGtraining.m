@@ -213,6 +213,15 @@ PsychDefaultSetup(1);
 % init PsychPortAudio with pushing for lowest possible latency
 InitializePsychSound(1);
 
+% Keyboard params - names
+KbNameSub = 'Logitech USB Keyboard';
+KbNameExp = 'CASUE USB KB';
+% detect attached devices
+[keyboardIndices, productNames, ~] = GetKeyboardIndices;
+% define subject's and experimenter keyboards
+KbIdxSub = keyboardIndices(ismember(productNames, KbNameSub));
+KbIdxExp = keyboardIndices(ismember(productNames, KbNameExp));
+
 % Define the specific keys we use
 keys = struct;
 keys.abort = KbName('ESCAPE');
@@ -354,15 +363,20 @@ disp([char(10), 'Showing the instructions right now...']);
 
 % wait for key press to start
 while 1
-    [keyIsDown, ~, keyCode] = KbCheck;
-    if keyIsDown 
+    [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+    [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
+    % subject key down
+    if keyIsDownSub 
         % if subject is ready to start
-        if find(keyCode) == keys.go
+        if find(keyCodeSub) == keys.go
             break;
+        end
+    % experimenter key down 
+    elseif keyIsDownExp
         % if abort was requested    
-        elseif find(keyCode) == keys.abort
+        if find(keyCodeExp) == keys.abort
             abortFlag = 1;
-            break
+            break;
         end
     end
 end
@@ -421,15 +435,20 @@ for block = startBlockNo:blockNo
     Screen('Flip', win);
     % wait for key press to start
     while 1
-        [keyIsDown, ~, keyCode] = KbCheck;
-        if keyIsDown 
+        [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+        [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
+        % subject key down
+        if keyIsDownSub 
             % if subject is ready to start
-            if find(keyCode) == keys.go
+            if find(keyCodeSub) == keys.go
                 break;
+            end
+        % experimenter key down
+        elseif keyIsDownExp
             % if abort was requested    
-            elseif find(keyCode) == keys.abort
+            if find(keyCodeExp) == keys.abort
                 abortFlag = 1;
-                break
+                break;
             end
         end
     end
@@ -494,21 +513,26 @@ for block = startBlockNo:blockNo
         % wait for response
         respFlag = 0;
         while GetSecs-(startTime+stimLength) <= respInt
-            [keyIsDown, respSecs, keyCode] = KbCheck;
-            if keyIsDown
+            [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+            [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
+            % subject key down
+            if keyIsDownSub
                 % if subject responded figure presence/absence
-                if find(keyCode) == keys.figPresent
+                if find(keyCodeSub) == keys.figPresent
                     figDetect(trial) = 1;
                     respFlag = 1;
                     break;
-                elseif find(keyCode) == keys.figAbsent
+                elseif find(keyCodeSub) == keys.figAbsent
                     figDetect(trial) = 0;
                     respFlag = 1;
                     break;
+                end
+            % experimenter key down
+            elseif keyIsDownExp
                 % if abort was requested    
-                elseif find(keyCode) == keys.abort
+                if find(keyCodeExp) == keys.abort
                     abortFlag = 1;
-                    break
+                    break;
                 end
             end
         end
@@ -598,13 +622,18 @@ for block = startBlockNo:blockNo
         Screen('Flip', win);
         % wait for key press to start
         while 1
-            [keyIsDown, ~, keyCode] = KbCheck;
-            if keyIsDown 
+            [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+            [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
+            % subject key down
+            if keyIsDownSub 
                 % if subject is ready to start
-                if find(keyCode) == keys.go
+                if find(keyCodeSub) == keys.go
                     break;
+                end
+            % experimenter key down    
+            elseif keyIsDownExp
                 % if abort was requested    
-                elseif find(keyCode) == keys.abort
+                if find(keyCodeExp) == keys.abort
                     abortFlag = 1;
                     break
                 end
