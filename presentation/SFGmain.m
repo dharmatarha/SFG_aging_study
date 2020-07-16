@@ -254,11 +254,11 @@ keys.abort = KbName('ESCAPE');
 keys.go = KbName('SPACE');
 % counterbalancing response side across subjects, based on subject number
 if mod(subNum, 2) == 0
-    keys.figPresent = KbName('j');
+    keys.figPresent = KbName('l');
     keys.figAbsent = KbName('s');
 else
     keys.figPresent = KbName('s');
-    keys.figAbsent = KbName('j');
+    keys.figAbsent = KbName('l');
 end
 
 % restrict keys to the ones we use
@@ -556,7 +556,7 @@ for block = startBlockNo:blockNo
         % wait for response
         respFlag = 0;
         while GetSecs-(startTime+stimLength) <= respInt
-            [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+            [keyIsDownSub, respSecs, keyCodeSub] = KbCheck(KbIdxSub);
             [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
             % subject key down
             if keyIsDownSub
@@ -652,10 +652,10 @@ for block = startBlockNo:blockNo
     clc;    
     
     % false alarm rate in block
-    blockFalseAlarm = (acc(trial-trialCounterForBlock+1:trial)==0 &... 
+    blockFalseAlarm = sum(acc(trial-trialCounterForBlock+1:trial)==0 &... 
         figStim(trial-trialCounterForBlock+1:trial)==0)/trialCounterForBlock*100;
     % user messages
-    disp([char(10), 'Block no. ', num2str(block), ' has ended,'... 
+    disp([char(10), char(10), 'Block no. ', num2str(block), ' has ended,'... 
         'showing block-ending text to participant']);
     disp([char(10), 'Overall accuracy in block was ', num2str(blockAcc),... 
         '%; false alarm rate was ', num2str(blockFalseAlarm), '%']);    
@@ -663,8 +663,7 @@ for block = startBlockNo:blockNo
     
     %% Feedback to subject at the end of block
     % if not last block and not a break
-    if (block ~= blockNo) && ~ismembertol(block, breakBlocks)
-        
+    if (block ~= blockNo) && ~ismembertol(block, breakBlocks)        
         
         % block ending text
         blockEndText = ['Vége a(z) ', num2str(block), '. blokknak!\n\n\n',... 
@@ -711,10 +710,8 @@ for block = startBlockNo:blockNo
     elseif (block ~= blockNo) && ismembertol(block, breakBlocks)
         
         % user message
-        disp([char(10), 'Block no. ', num2str(block), ' has ended,'... 
-            'showing block-ending text to participant. \n\n', ...
-            'There is a BREAK now!']);
-        disp('Only the experimenter can start the next block!');
+        disp([char(10), 'There is a BREAK now!']);
+        disp('Only the experimenter can start the next block - press "SPACE" when ready');
         
         % block ending text
         blockEndText = ['Vége a(z) ', num2str(block), '. blokknak!\n\n\n',... 

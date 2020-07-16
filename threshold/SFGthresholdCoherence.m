@@ -178,11 +178,11 @@ keys.abort = KbName('ESCAPE');
 keys.go = KbName('SPACE');
 % counterbalancing response side across subjects, based on subject number
 if mod(subNum, 2) == 0
-    keys.figPresent = KbName('j');
+    keys.figPresent = KbName('l');
     keys.figAbsent = KbName('s');
 else
     keys.figPresent = KbName('s');
-    keys.figAbsent = KbName('j');
+    keys.figAbsent = KbName('l');
 end
 
 % restrict keys to the ones we use
@@ -349,7 +349,7 @@ disp([char(10), 'Done, we are ready to start the staircase for threshold ',...
 % instructions text
 instrText = ['A következő blokkokban ugyanaz lesz a feladata, mint a gyakorlás során, \n',...
     'de gombnyomást követően nem jelenik majd meg a képernyőn hogy a válasz helyes volt-e.\n\n',...
-    'Összesen ', num2str(trialMax), ' hangmintát fogunk lejátszani Önnek, \n',...
+    'Összesen kb. ', num2str(trialMax+trialExtraMax/2), ' hangmintát fogunk lejátszani Önnek, \n',...
     'a feladat kb. ', num2str(round(trialMax/9)), ' percen át fog tartani.\n\n',...
     'Hangmintában van emelkedő hangsor  -  "', KbName(keys.figPresent), '" billentyű. \n',... 
     'Hangmintában nincs emelkedő hangsor  -  "' ,KbName(keys.figAbsent), '" billentyű. \n\n',...
@@ -491,7 +491,7 @@ while trialN < trialMax  || (SDestFlag == 0 && trialN < (trialMax+trialExtraMax)
     % wait for response
     respFlag = 0;
     while GetSecs-(startTime+stimLength) <= respInt
-        [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+        [keyIsDownSub, respSecs, keyCodeSub] = KbCheck(KbIdxSub);
         [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
         % subject key down
         if keyIsDownSub

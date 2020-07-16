@@ -228,11 +228,11 @@ keys.abort = KbName('ESCAPE');
 keys.go = KbName('SPACE');
 % counterbalancing response side across subjects, based on subject number
 if mod(subNum, 2) == 0
-    keys.figPresent = KbName('j');
+    keys.figPresent = KbName('l');
     keys.figAbsent = KbName('s');
 else
     keys.figPresent = KbName('s');
-    keys.figAbsent = KbName('j');
+    keys.figAbsent = KbName('l');
 end
 
 % restrict keys to the ones we use
@@ -349,7 +349,7 @@ instrText = ['A feladatot rövid blokkokban fogjuk elvégezni.\n\n',...
     'emelkedő hangsort vagy sem. A képernyőn minden gombnyomást követően megjelenik majd, \n',...
     'hogy a válasz helyes volt-e.\n\n',...
     'Hangmintában van emelkedő hangsor  -  "', KbName(keys.figPresent), '" billentyű. \n',...
-    'Hangmintában nincs emelkedő hangsor  -  "', KbName(keys.figPresent), '" billentyű. \n\n',...
+    'Hangmintában nincs emelkedő hangsor  -  "', KbName(keys.figAbsent), '" billentyű. \n\n',...
     'Mindig akkor válaszoljon, amikor megjelenik a kérdőjel. \n',...
     'Nyomja meg a SPACE billentyűt ha készen áll!'];
 
@@ -513,7 +513,7 @@ for block = startBlockNo:blockNo
         % wait for response
         respFlag = 0;
         while GetSecs-(startTime+stimLength) <= respInt
-            [keyIsDownSub, ~, keyCodeSub] = KbCheck(KbIdxSub);
+            [keyIsDownSub, respSecs, keyCodeSub] = KbCheck(KbIdxSub);
             [keyIsDownExp, ~, keyCodeExp] = KbCheck(KbIdxExp);
             % subject key down
             if keyIsDownSub
@@ -588,7 +588,7 @@ for block = startBlockNo:blockNo
         disp(['Overall accuraccy in block so far is ', num2str(blockAcc), '%']);
         
         % accumulating all results in logging / results variable
-        logVar(trial+1, 11:end-1) = {acc(trial), figDetect(trial),... 
+        logVar(trial+1, 11:end) = {acc(trial), figDetect(trial),... 
             respTime(trial), iti(trial),...
             trialStart, startTime-trialStart,... 
             (figStartCord(trial)-1)*chordLength,... 
