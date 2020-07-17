@@ -1,34 +1,49 @@
-function SFGintro(subNum, stimopt)
+function SFGintro(subNum, stimopt, OEMfiltering)
 %% Function to familiarize subjects with SFG stimuli
 %
-% USAGE: SFGintro(subNum, stimopt=SFGparamsIntro)
+% USAGE: SFGintro(subNum, stimopt=SFGparamsIntro, OEMfiltering=true)
 %
 % Gives control to the subject to request stimuli either without figure or
 % with an easily recognizable figure. Two connected displays are assumed,
 % one for experimenter/control, one for the subject with simple
 % instructions.
 %
-% Input:
-% subNum        - Subject number, integer between 1-999
-% stimopt       - Parameters for SFG stimulus in a struct. Passed to
-%               createSingleSFGstim for generating stimuli. See
-%               SFGparamsIntro for details. Defaults to calling
-%               SFGparamsIntro
+% Mandatory input:
+% subNum        - Numerical value. Subject number, one of 1:999.
+%
+% Optional inputs:
+% stimopt       - Struct. Its fields contain the parameters for SFG 
+%               stimulus. Passed to createSingleSFGstim for generating 
+%               stimuli. See SFGparamsIntro for details. Defaults to
+%               calling SFGparamsIntro.
+% OEMfiltering  - Logical value. Flag for loading and applying a filter
+%               correcting for loudness distortions (see loudness curves),
+%               passed on to createSingleSFGstimulus. Defaults to "true",
+%               which in turn requires an "OEM_*.mat" file containing
+%               filter coeffs located in pwd.
 %
 
 
 %% Input checks
 
+if ~ismembertol(nargin, 1:3)
+    error(['Function SFGintro requires input arg "subNum" while input ',...
+        'args "stimopt" and "OEMfiltering" are optional!']);
+end
 if nargin == 1
     stimopt = SFGparamsIntro;
+    OEMfiltering = true;
+elseif nargin == 2
+    OEMfiltering = true;
 end
-% subject number
 if ~ismembertol(subNum, 1:999)
     error('Input arg "subNum" should be between 1 - 999!');
 end
-% stimopt
 if ~isstruct(stimopt)
     error('Input arg "stimopt" is expected to be a struct!');
+end
+if ~islogical(OEMfiltering) || numel(OEMfiltering)~=1
+    error('Input arg "OEMfiltering" should be a logical value!');
 end
 
 % Workaround for a command window text display bug - too much printing to
@@ -40,6 +55,7 @@ clc;
 
 disp([char(10), 'Called function SFGintro with inputs: ',...
      char(10), 'subject number: ', num2str(subNum),...
+     char(10), 'OEMfiltering is set to: ', num2str(OEMfiltering),...
      char(10), 'stimulus options: ']);
 disp(stimopt);
 
@@ -291,12 +307,12 @@ while 1  % until abort is requested
     % create stimulus - with or without figure
     if nextTrial == 1
         % create next stimulus and load it into buffer
-        [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimoptFigure);
+        [soundOutput, ~, ~] = createSingleSFGstim(stimoptFigure, OEMfiltering);
         buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
         PsychPortAudio('FillBuffer', pahandle, buffer); 
     elseif nextTrial == 0
         % create next stimulus and load it into buffer
-        [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimoptNoFigure);
+        [soundOutput, ~, ~] = createSingleSFGstim(stimoptNoFigure, OEMfiltering);
         buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
         PsychPortAudio('FillBuffer', pahandle, buffer);         
     end

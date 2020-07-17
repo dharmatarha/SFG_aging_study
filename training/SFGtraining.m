@@ -12,15 +12,18 @@ function SFGtraining(subNum, stimArrayFile)
 % The script also requires stim2blocksTraining.m for sorting stimuli into
 % blocks.
 %
-% Inputs:
+% Mandatory input:
 % subNum        - Subject number, integer between 1-999
-% stimArrayFile - *.mat file with cell array "stimArray" containing all 
-%               stimuli + features (size: no. of stimuli X 11 columns),
-%               defaults to 'stimArrayTraining.mat'
+%
+% Optional input:
+% stimArrayFile - Char array, path to *.mat file with cell array  
+%               "stimArray" containing all stimuli + features 
+%               (size: no. of stimuli X 11 columns), defaults to 
+%               'stimArrayTraining.mat'
 % 
 % Results (response times and presentation timestamps for later checks) are
-% saved out into /subjectXX/training_subXXLog_"timestamp".mat, where XX stands for 
-% subject number.
+% saved out into /subjectXX/training_subXXLog_"timestamp".mat, where XX 
+% stands for subject number.
 %
 % NOTES:
 % (1) Responses are counterbalanced across subjects, based on subject
@@ -38,17 +41,15 @@ function SFGtraining(subNum, stimArrayFile)
 
 %% Input checks
 
-if ~ismember(nargin, [1 2]) 
-    error('Function needs mandatory input arg "subNum" and optional arg "stimArrayFile"!');
+if ~ismembertol(nargin, 1:2) 
+    error('Function needs mandatory input arg "subNum" while input arg "stimArrayFile" is optional!');
 end
 if nargin == 1
     stimArrayFile = 'stimArrayTraining.mat';
 end
-% subject number
 if ~ismembertol(subNum, 1:999)
     error('Input arg "subNum" should be between 1 - 999!');
 end
-% file with stimuli array
 if ~exist(stimArrayFile, 'file')
     error(['Cannot find stimulus file at ', stimArrayFile, '!']);
 end
@@ -62,7 +63,7 @@ clc;
 
 % user message
 disp([char(10), 'Called SFG training function with input args: ',...
-    char(10), 'subNum: ', num2str(subNum),...
+    char(10), 'subject number: ', num2str(subNum),...
     char(10), 'stimArrayFile:', stimArrayFile]);
 
 

@@ -1,11 +1,48 @@
-function SFGtesting
+function SFGtesting(stimopt, OEMfiltering)
 
-%% Script to create and play SFG stimuli iteratively in a loop
+%% Script to play around with SFG stimuli
+% 
+% USAGE: SFGtesting(stimopt=SFGparamsIntro, OEMfiltering = true)
 %
+% A simple command line application that asks you to specify SFG stimulus
+% properties coherence, duration, stepsize and no. of tones and then
+% proceeds to generate and play the stimulus. Runs in a loop - you can
+% generate and listen to as many stimuli as you want.
 %
+% Optional inputs:
+% stimopt       - Struct. Its fields contain default stimulus options, some of
+%               which are to be overwritten by user inputs. Defaults to calling
+%               SFGparamsIntro(). See details in SFGparamsIntro or SFGparams.
+% OEMfiltering  - Logical value. Flag for loading and applying a filter
+%               correcting for loudness distortions (see loudness curves),
+%               passed on to createSingleSFGstimulus. Defaults to "true",
+%               which in turn requires an "OEM_*.mat" file containing
+%               filter coeffs located in pwd.
 %
-%
-%
+
+
+%% Basics
+
+% input checks
+if ~ismembertol(nargin, 0:2)
+    error('Function SFGtesting expects at maximum two (optional) input args, "stimopt" and "OEMfiltering"!');
+end
+if nargin == 1
+    OEMfiltering = true;
+elseif nargin == 0
+    stimopt = SFGparamsIntro;
+end
+if ~isstruct(stimopt)
+    error('Input arg "stimopt" should be a struct, for fields see "help SFGparams"!');
+end
+if ~islogical(OEMfiltering) || numel(OEMfiltering)~=1
+    error('Input arg "OEMfiltering" should be a logical value!');
+end
+
+% user message
+disp('Started SFGtesting with base SFG params: ');
+disp(stimopt);
+disp('OEMfiltering set to: ', num2str(OEMfiltering)); 
 
 
 %% Psychtoolbox & PsychPortAudio setup, params & settings
@@ -67,7 +104,7 @@ disp([char(10), 'Params, PsychPortAudio prepared, ready to go']);
 while 1
 
     % User input flags for current stimulus
-    cohFlag = 0; durFlag = 0; stepSizeFlag = 0;
+    cohFlag = 0; durFlag = 0; stepSizeFlag = 0; backgrFlag = 0; 
     
     % coherence
     while 1  
@@ -78,7 +115,7 @@ while 1
         inputRes = input([char(10), 'Provide a coherence level (between 1-20): ', char(10)]);
         % check value, set coherence level and flag
         if ismember(inputRes, 1:20)
-            figCoh = inputRes;
+            stimopt.figureCoh = inputRes;
             cohFlag = 1;
             disp([char(10), 'Coherence level is set to ', num2str(inputRes), char(10)]);
         else
@@ -95,7 +132,7 @@ while 1
         inputRes = input([char(10), 'Provide a duration value (in chords, between 1-20): ', char(10)]);
         % check value, set duration and flag
         if ismember(inputRes, 1:20)
-            figDur = inputRes;
+            stimopt.figureDur = inputRes;
             durFlag = 1;
             disp([char(10), 'Duration is set to ', num2str(inputRes), char(10)]);
         else
@@ -112,7 +149,7 @@ while 1
         inputRes = input([char(10), 'Provide a step size (in half-semitone/chord, from -5 to +5): ', char(10)]);
         % check value, set duration and flag
         if ismember(inputRes, -5:1:5)
-            stepSize = inputRes;
+            stimopt.figureStepS = inputRes;
             stepSizeFlag = 1;
             disp([char(10), 'Step size is set to ', num2str(inputRes), char(10)]);
         else
@@ -120,28 +157,32 @@ while 1
         end 
     end    
     
-    % update stimopt, display it
-    c = clock; seed = round(sum(c));
-    stimopt = struct( ...
-        'totalDur', 2, ...
-        'chordDur', 0.05, ...
-        'toneComp', 15, ...
-        'toneFreqSetL', 129, ...
-        'toneFreqMin', 179, ...
-        'toneFreqMax', 7246, ...
-        'chordOnset', 0.01, ...
-        'figureDur', figDur, ...
-        'figureCoh', figCoh, ...
-        'figureMinOnset', 0.3, ...
-        'figureOnset', nan,...
-        'figureStepS', stepSize, ...
-        'sampleFreq', 44100, ...
-        'randomSeed', seed);
+    % no. of background tone components
+    while 1  
+        if backgrFlag
+            break;
+        end   
+        % input for coherence level
+        inputRes = input([char(10), 'Provide the number of background tone components (between 1-30): ', char(10)]);
+        % check value, set coherence level and flag
+        if ismember(inputRes, 1:30)
+            stimopt.toneComp = inputRes+stimopt.figureCoh;
+            backgrFlag = 1;
+            disp([char(10), 'No. of background tones is set to ', num2str(inputRes)]);
+            disp(['Overall, there will be ', num2str(stimopt.toneComp),... 
+                ' tone components.\n For the figure, ', num2str(stimopt.figureCoh),... 
+                ' of them will move coherently', char(10)]);
+        else
+            disp([char(10), 'Wrong value, try again', char(10)]);
+        end  
+    end        
+    
+    % user message about upcoming stimulus
     disp([char(10), 'Stimulus parameters for next SFG stimulus: ', char(10)]);
     disp(stimopt);
 
     % create SFG stimulus
-    [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt);
+    [soundOutput, ~, ~] = createSingleSFGstim(stimopt, OEMfiltering);
     % fill audio buffer with next stimuli
     buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
     PsychPortAudio('FillBuffer', pahandle, buffer);

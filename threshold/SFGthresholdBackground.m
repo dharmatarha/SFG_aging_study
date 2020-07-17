@@ -1,7 +1,7 @@
 function SFGthresholdBackground(subNum, varargin)
 %% Quest threshold for SFG stimuli aimed at estimating the effect of background notes
 %
-% USAGE: SFGthresholdBackground(subNum, stimopt=SFGparamsThreshold, trialMax=80)
+% USAGE: SFGthresholdBackground(subNum, stimopt=SFGparamsThreshold, trialMax=80, OEMfiltering=true)
 %
 % The procedure changes the number of background tones using the adaptive staircase
 % procedure QUEST. Fixed trial + QuestSd check approach, that is, the
@@ -31,7 +31,11 @@ function SFGthresholdBackground(subNum, varargin)
 %               SFGparamsThreshold.m
 % trialMax      - Numeric value, number of trials used for staircase
 %               procedure, one of 10:120. Defaults to 80.
-%
+% OEMfiltering  - Logical value. Flag for loading and applying a filter
+%               correcting for loudness distortions (see loudness curves),
+%               passed on to createSingleSFGstimulus. Defaults to "true",
+%               which in turn requires an "OEM_*.mat" file containing
+%               filter coeffs located in pwd
 %
 % Output:
 % q             - Quest object.
@@ -41,13 +45,13 @@ function SFGthresholdBackground(subNum, varargin)
 % E.g. initial wrong answers at high SNR levels might throw the estimates
 % off.
 %
-%
+
 
 %% Input checks
 
-% chcek no. of args
-if ~ismember(nargin, 1:3) 
-    error('Function SFGthresholdBackground needs mandatory input arg "subNum" and optional args "stimopt" and "trialMax"!');
+% check no. of args
+if ~ismember(nargin, 1:4) 
+    error('Function SFGthresholdBackground needs mandatory input arg "subNum" while args "stimopt", "trialMax" and "OEMfiltering" are optional!');
 end
 % check mandatory input arg
 if ~ismembertol(subNum, 1:999)
@@ -60,6 +64,8 @@ if ~isempty(varargin)
             stimopt = varargin{v};
         elseif isnumeric(varargin{v}) && ismembertol(varargin{v}, 10:120) && ~exist('trialMax', 'var')
             trialMax = varargin{v};
+        elseif islogical(varargin{v}) && numel(varargin{v})==1 && ~exist('OEMfiltering', 'var')
+            OEMfiltering = varargin{v};             
         else
             error('An input arg could not be mapped nicely to "stimopt" or "trialMax"!');
         end
@@ -71,6 +77,9 @@ if ~exist('stimopt', 'var')
 end
 if ~exist('trialMax', 'var')
     trialMax = 80;
+end
+if ~exist('OEMfiltering', 'var')
+    OEMfiltering = true;
 end
 
 % Workaround for a command window text display bug - too much printing to
@@ -84,6 +93,7 @@ clc;
 disp([char(10), 'Called function SFGthresholdBackground with inputs: ',...
      char(10), 'subNum: ', num2str(subNum),...
      char(10), 'number of trials for Quest: ', num2str(trialMax),...
+     char(10), 'OEMfiltering is set to: ', num2str(OEMfiltering),...
      char(10), 'stimulus params: ']);
 disp(stimopt);
 disp([char(10), 'TARGET THRESHOLD IS SET TO 65%!']);
@@ -364,7 +374,7 @@ elseif trialType(1) == 1
 end
 
 % query a stimulus
-[soundOutput, ~, ~] = createSingleSFGstim(stimopt);
+[soundOutput, ~, ~] = createSingleSFGstim(stimopt, OEMfiltering);
 
 % fill audio buffer with next stimuli
 buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
@@ -500,7 +510,7 @@ while trialN < trialMax  || (SDestFlag == 0 && trialN < (trialMax+trialExtraMax)
         disp(['Coherence level is set to: ', num2str(stimopt.figureCoh)]);
         
         % create next stimulus and load it into buffer
-        [soundOutput, ~, ~] = createSingleSFGstim(stimopt);
+        [soundOutput, ~, ~] = createSingleSFGstim(stimopt, OEMfiltering);
         buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
         PsychPortAudio('FillBuffer', pahandle, buffer);        
         

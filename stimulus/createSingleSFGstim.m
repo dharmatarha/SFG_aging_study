@@ -1,8 +1,8 @@
 
-function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt)
+function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt, OEMfiltering)
 %% Generates a single SFG stimulus
 %
-% USAGE: [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt)
+% USAGE: [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt, OEMfiltering=false)
 %
 % Returns two-channel audio (2 X samples) of SFG stimulus for the
 % parameters passed in stimopt struct. To be used in cases where an
@@ -11,10 +11,18 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 % Important: Stimuli without a figure is specified by setting
 % stimopt.figureCoh (figure coherence) to 0.
 %
-% Input:
+% Mandatory input:
 % stimopt       - struct containing stimulus parameters (both for 
 %               background and figure). The list of fields required is
 %               below, for details see SFGparams.m
+%
+% Optional input:
+% OEMfiltering  - Logical value. Flag for loading and applying a filter
+%               correcting for loudness distortions (see loudness curves).
+%               Defaults to "false". If "true", loads filter coeffs "a" 
+%               and "b" from a file called "OEM_*.mat" in current working 
+%               directory. Filter is applied with filter(a, b, signal)
+%               command.
 %
 % Outputs:
 % soundOutput       - Numeric matrix corresponding to the audio stimulus.
@@ -63,8 +71,14 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 
 %% Input checks
 
-if nargin ~= 1
-    error('Function createSingleSFGstim requires input arg "stimopt"!');
+if ~ismembertol(nargin, [1, 2])
+    error('Function createSingleSFGstim requires input arg "stimopt" while input arg "OEMfiltering" is optional!');
+end
+if nargin == 1
+    OEMfiltering = false;
+end
+if ~islogical(OEMfiltering) || numel(OEMfiltering)~=1
+    error('Input arg "OEMfiltering" should be a logical value!');
 end
 if ~isstruct(stimopt)
     error('Input arg "stimopt" is expected to be a struct!');
@@ -79,6 +93,15 @@ if isfield(stimopt, 'randomSeed')
     if ~isempty(stimopt.randomSeed) && isnumeric(stimopt.randomSeed)
         rng(stimopt.randomSeed); 
     end
+end
+
+% load filter coeffs if OEMfiltering flag is true
+if OEMfiltering 
+    filterFile = dir([pwd, '/OEM_*.mat']);
+    if length(filterFile) ~= 1
+        error('Could not find or found multiple versions of the filter coeffs file "OEM_*.mat"!');
+    end
+    filterCoeffs = load([filterFile.folder, '/', filterFile.name]);
 end
 
 % generating logarithmically uniform frequency range for the random
@@ -201,6 +224,12 @@ for chordPos = 1:stimulusChordNumber
     soundIndex = soundIndex + numberOfSamples;    
 
 end  % chord for loop
+
+% apply loudness correction (OEM filter) if OEMfiltering flag is true
+if OEMfiltering
+    soundOutput(1, :) = filter(filterCoeffs.a, filterCoeffs.b, soundOutput(1, :));
+    soundOutput(2, :) = filter(filterCoeffs.a, filterCoeffs.b, soundOutput(2, :));
+end
 
 % normalize left and right output to the range -1 <= amplitude <= 1
 maxSoundOutput = max(max(abs(soundOutput)));
