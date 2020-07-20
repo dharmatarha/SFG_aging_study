@@ -13,7 +13,7 @@ function SFGtraining(subNum, stimArrayFile)
 % blocks.
 %
 % Mandatory input:
-% subNum        - Subject number, integer between 1-999
+% subNum        - Numeric value, one of 1:999. Subject number.
 %
 % Optional input:
 % stimArrayFile - Char array, path to *.mat file with cell array  
@@ -42,7 +42,7 @@ function SFGtraining(subNum, stimArrayFile)
 %% Input checks
 
 if ~ismembertol(nargin, 1:2) 
-    error('Function needs mandatory input arg "subNum" while input arg "stimArrayFile" is optional!');
+    error('Function SFGtraining requires input arg "subNum" while input arg "stimArrayFile" is optional!');
 end
 if nargin == 1
     stimArrayFile = 'stimArrayTraining.mat';
@@ -64,7 +64,7 @@ clc;
 % user message
 disp([char(10), 'Called SFG training function with input args: ',...
     char(10), 'subject number: ', num2str(subNum),...
-    char(10), 'stimArrayFile:', stimArrayFile]);
+    char(10), 'stimArrayFile: ', stimArrayFile]);
 
 
 %% Load/set params, stimuli, set folder, etc
