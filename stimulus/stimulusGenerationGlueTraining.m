@@ -1,7 +1,7 @@
 function stimulusGenerationGlueTraining(varargin)
-%% Script glueing stimulus generation functions together for training
+%% Function glueing stimulus generation steps together for training
 %
-% USAGE: stimulusGenerationGlueTraining(paramValues=[12, 10, 20; 11, 10, 20; 10, 10, 20;...], trialMax=60; OEMfiltering=true)
+% USAGE: stimulusGenerationGlueTraining(paramValues=[7, 10, 20; 8, 10, 20; 9, 10, 20;...], trialMax=60; OEMfiltering=true)
 %
 % The goal is to generate training stimuli similar to those used in 
 % O'Sullivan et al., 2015, Evidence for Neural Computations of Temporal 
@@ -38,13 +38,15 @@ function stimulusGenerationGlueTraining(varargin)
 %               for figureCoh, figureDur and toneComp values (see
 %               SFGparams.m for details on parameters). Rows must be unique
 %               and will correspond to the figure types in the generated
-%               set.
+%               set. Defaults to coherence values 7:12, while duration
+%               and toneComp values are held constant at 10 and 20,
+%               respectively.
 % trialMax      - Numeric value, one of 12:120. Number of trials to 
 %               generate. Must be multiple of size(paramValues, 1)*2. 
 %               Defaults to 60.
 % OEMfiltering  - Logical value. Flag for loading and applying a filter
 %               correcting for loudness distortions (see loudness curves),
-%               passed on to createSingleSFGstimulus. Defaults to "true",
+%               passed on to createSFGstimulus. Defaults to "true",
 %               which in turn requires an "OEM_*.mat" file containing
 %               filter coeffs located in pwd.
 %
@@ -93,7 +95,14 @@ end
 if ~exist('OEMfiltering', 'var')
     OEMfiltering = true;
 end
-    
+
+% Workaround for a command window text display bug - too much printing to
+% command window results in garbled text, see e.g.
+% https://www.mathworks.com/matlabcentral/answers/325214-garbled-output-on-linux
+% Calling "clc" from time to time prevents the bug from making everything
+% unreadable
+clc;
+
 % user message
 disp([char(10), 'Called function stimulusGenerationGlueTraining with args: ',... 
     char(10), 'Number of trials to generate: ', num2str(trialMax),...

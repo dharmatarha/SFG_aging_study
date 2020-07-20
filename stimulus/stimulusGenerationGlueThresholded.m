@@ -1,7 +1,7 @@
-function stimArrayFile = stimulusGenerationGlueThresholded(subNum, trialMax)
-%% Script glueing stimulus generation functions together for our use case
+function stimArrayFile = stimulusGenerationGlueThresholded(subNum, varargin)
+%% Function glueing stimulus generation steps together for subject-specific stimuli
 %
-% USAGE: stimArrayFile = stimulusGenerationGlueThresholded(subNum, trialMax=800)
+% USAGE: stimArrayFile = stimulusGenerationGlueThresholded(subNum, trialMax=800, OEMfiltering=true)
 %
 % Our goal is generate stimuli similar to those used in Toth et al., 2016
 % (https://www.sciencedirect.com/science/article/pii/S1053811916303354?via%3Dihub).
@@ -15,9 +15,14 @@ function stimArrayFile = stimulusGenerationGlueThresholded(subNum, trialMax)
 % Mandatory input:
 % subNum            - Numeric value, one of 1:999. Subject number.
 %
-% Optional input:
+% Optional inputs:
 % trialMax          - Numeric value, one of 12:1200. Number of trials to 
-%                   generate. Defaults to 800.
+%                   generate. Must be multiple of four. Defaults to 800.
+% OEMfiltering      - Logical value. Flag for loading and applying a filter
+%                   correcting for loudness distortions (see loudness curves),
+%                   passed on to createSFGstimulus. Defaults to "true",
+%                   which in turn requires an "OEM_*.mat" file containing
+%                   filter coeffs located in pwd.
 %
 % Output:
 % stimArrayFile     - String, path for the file containing all stimuli and
@@ -26,35 +31,47 @@ function stimArrayFile = stimulusGenerationGlueThresholded(subNum, trialMax)
 % The script creates a folder with subfolders for stimulus types, and a
 % cell array accumulating all stimuli together, saved out into a .mat file
 %
-% The script relies on the following functions:
+% NOTES:
+% (1) The script relies on the following functions:
 % SFGparams         - base parameter settings
 % createSFGstimuli  - create stimuli for specific parameters
 % getStimuliArray   - aggregate stimuli from multiple runs of
 %                   createSFGstimuli
-%
-% NOTE:
-% (1) Make sure SFGparams contains the right base parameters. While
-% generating stimuli, we only change the coherence and toneComp values
-% across runs of createSFGstimuli, the rest is taken from SFGparams.m. 
+% (2) Make sure SFGparams contains the right base parameters. While
+% generating stimuli, we only change the coherence and onset values
+% across runs of createSFGstimuli, the rest is taken from SFGparams.m.  
 %
 
 
 %% Input checks
 
-if ~ismembertol(nargin, 1:2)
-    error('Function "stimulusGenerationGlueThresholded" requires input arg "subNum" while input arg "trialNo" is optional!');
+% check number of args
+if ~ismembertol(nargin, 1:3)
+    error(['Function "stimulusGenerationGlueThresholded" requires input arg "subNum" ',...
+        'while input args "trialMax" and "OEMfiltering" are optional!']);
 end
-if nargin == 1
-    trialMax = 800;
-end
+% check mandatory arg
 if ~ismembertol(subNum, 1:999)
     error('Input arg "subNum" should be one of 1:999!');
 end
-if ~ismembertol(trialMax, 12:1200)
-    error('Input arg "trialNo" should be one of 12:1200!');
+% check optional args
+if ~isempty(varargin)
+    for v = 1:length(varargin)
+        if isnumeric(varargin{v}) && ismembertol(varargin{v}, 12:1200) && mod(varargin{v}, 4)==0 && ~exist('trialMax', 'var') 
+            trialMax = varargin{v};
+        elseif islogical(varargin{v}) && numel(varargin{v})==1 && ~exist('OEMfiltering', 'var')
+            OEMfiltering = varargin{v};
+        else
+            error('At least one input arg could not be matched nicely to "trialMax" or "OEMfiltering"!');
+        end
+    end
 end
-if mod(trialMax, 4) ~= 0
-    error('Input arg "trialNo" must be multiple of four!');
+% assign default values
+if ~exist('trialMax', 'var')
+    trialMax = 800;
+end
+if ~exist('OEMfiltering', 'var')
+    OEMfiltering = true;
 end
 
 
@@ -106,15 +123,24 @@ figValues = [1 0];
 stimTypeNo = numel(backgrValues)*numel(figValues);
 
 % no. of trials for each stimulus type
-trialNo = trialMax/stimTypeNo;
+trialPerType = trialMax/stimTypeNo;
 
 % cell array holding the subfolder names with different stimulus types
 stimTypeDirs = cell(stimTypeNo, 1);
+
+% Workaround for a command window text display bug - too much printing to
+% command window results in garbled text, see e.g.
+% https://www.mathworks.com/matlabcentral/answers/325214-garbled-output-on-linux
+% Calling "clc" from time to time prevents the bug from making everything
+% unreadable
+clc;
 
 % user message
 disp([char(10), 'Called the stimulusGenerationGlueThresholded script, ',... 
     'main params:', ...
     char(10), 'Subject number: ', num2str(subNum),...
+    char(10), 'Requested number of trials: ', num2str(trialMax),...
+    char(10), 'OEMfiltering is set to: ', num2str(OEMfiltering),...
     char(10), 'Figure coherence value: ', num2str(baseCoherence),...
     char(10), 'Background tone numbers: ', num2str(backgrValues),...);
     char(10), 'Figure presence/absence: ']);
@@ -148,7 +174,7 @@ for f = 1:length(figValues)
         stimopt.toneComp = backgrValues(b) + baseCoherence;
         
         % generate stimuli
-        stimTypeDirs{counter} = createSFGstimuli(trialNo, stimopt);
+        stimTypeDirs{counter} = createSFGstimuli(trialPerType, stimopt, OEMfiltering);
         
         % adjust counter
         counter = counter+1;
@@ -174,7 +200,7 @@ stimArray = vertcat(stimArray{:});
 disp([char(10), 'Quick and minimal sanity checks on generated stimuli...']);
 
 % intended number of trials with each of figValues
-figTypeNo = (stimTypeNo*trialNo)/length(figValues);
+figTypeNo = (stimTypeNo*trialPerType)/length(figValues);
 % check if true
 figParams = (cell2mat(stimArray(:, 6))~=0);
 for f = 1:length(figValues)
@@ -184,7 +210,7 @@ for f = 1:length(figValues)
     end
 end
 % same as above but for background tone numbers
-backgrTypeNo = (stimTypeNo*trialNo)/length(backgrValues);
+backgrTypeNo = (stimTypeNo*trialPerType)/length(backgrValues);
 % check if true
 toneCompParams = cell2mat(stimArray(:, 11));
 for b = 1:length(backgrValues)
