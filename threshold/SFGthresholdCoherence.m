@@ -107,7 +107,26 @@ if ~exist(dirN, 'dir')
     % create a folder for subject if there was none
     mkdir(dirN);
     disp([char(10), 'Created folder for subject at ', dirN]);
-end
+% check for earlier results from running this function
+else    
+    cohResFiles = dir([dirN, '/', 'thresholdCoherence_sub', num2str(subNum), '*']);
+    % if we found any, report to user and rename/move them
+    if ~isempty(cohResFiles)
+        disp([char(10), 'Found ', num2str(length(cohResFiles)),... 
+            ' results file(s) for subject ', num2str(subNum),... 
+            ' from earlier runs of this function']);
+        disp('Appending earlier files with a prefix "old_"...');
+        for i = 1:length(cohResFiles)
+            % rename files
+            src = [cohResFiles(i).folder, '/', cohResFiles(i).name];
+            dest = [cohResFiles(i).folder, '/old_', cohResFiles(i).name];
+            success = movefile(src, dest);
+            if ~success
+                error(['Could not move file ', src, '!']);
+            end
+        end  % for i
+    end  % if ~isempty        
+end  % if ~exist 
 
 % date and time of starting with a subject
 c = clock; d = date;

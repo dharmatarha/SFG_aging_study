@@ -111,6 +111,25 @@ if ~exist(dirN, 'dir')
         'SFGthresholdCoherence to be saved to subject''s folder!']);
 end
 
+% check for earlier results from running this function  
+backgrResFiles = dir([dirN, '/', 'thresholdBackground_sub', num2str(subNum), '*']);
+% if we found any, report to user and rename/move them
+if ~isempty(backgrResFiles)
+    disp([char(10), 'Found ', num2str(length(backgrResFiles)),... 
+        ' results file(s) for subject ', num2str(subNum),... 
+        ' from earlier runs of this function']);
+    disp('Appending earlier files with a prefix "old_"...');
+    for i = 1:length(backgrResFiles)
+        % rename files
+        src = [backgrResFiles(i).folder, '/', backgrResFiles(i).name];
+        dest = [backgrResFiles(i).folder, '/old_', backgrResFiles(i).name];
+        success = movefile(src, dest);
+        if ~success
+            error(['Could not move file ', src, '!']);
+        end
+    end  % for i
+end  % if ~isempty        
+
 % date and time of starting with a subject
 c = clock; d = date;
 timestamp = {[d, '-', num2str(c(4)), num2str(c(5))]};
@@ -127,6 +146,11 @@ disp([char(10), 'Loading SFGthresholdCoherence results for subject']);
 
 % get file name - exact file name contains unknown time stamp
 cohResFile = dir([dirN, '/thresholdCoherence_sub', num2str(subNum), '*.mat']);
+% check if there is really only one SFGthresholdCoherence result file
+if length(cohResFile) ~= 1
+    error(['We found no or multiple results files for subject ',... 
+        num2str(subNum), ' from running SFGthresholdCoherence!']);
+end
 cohResFilePath = [cohResFile.folder, '/', cohResFile.name];
 
 % load results from coherence-thresholding
