@@ -81,7 +81,7 @@ blockNo = length(unique(blockIdx));
 
 % attach stimulus type indices, block and trial indices to stimulus
 % array - but first a quick sanity check of stimArray size
-if ~isequal(size(stimArray), [length(trialIdx), 11])
+if ~isequal(size(stimArray), [length(trialIdx), 12])
     error('Stimulus cell array ("stimArray") has unexpected size, investigate!');
 end
 stimArray = [stimArray, num2cell(stimTypeIdx), num2cell(blockIdx), num2cell(trialIdx)];
@@ -413,7 +413,7 @@ for block = startBlockNo:blockNo
     trialList = trialIdx(blockIdx==block);
     buffer = [];
     for trial = min(trialList):max(trialList)
-        audioData = stimArray{trial, 11};
+        audioData = stimArray{trial, 12};
         buffer(end+1) = PsychPortAudio('CreateBuffer', [], audioData');
     end
 
