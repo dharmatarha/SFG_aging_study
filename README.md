@@ -11,8 +11,8 @@ For more on the SFG please see (among others):
 <br></br>
 ## Dependencies / environment
 The study relies on [Psychtoolbox](https://psychtoolbox.org/) under Ubuntu 18.04 for stimulus generation/presentation. While Psychtoolbox is compatible with Octave, development is for Matlab (2017a) and Octave compatibility is not tested. In principle though, adapting the functions to Octave should be simple.   
-<br></br>
 Stimulus presentation settings / parameters are specified for the Mordor lab at RCNS, Budapest. We rely on a two-X-screens setup (two independent displays): one for stimulus presentation, one for control. Subject responses are recorded via standard keyboards. For EEG, TTL-logic level triggers are supported via the great ppdev-mex interface by Andreas Widmann. 
+<br></br>
 ## Usage
 Functions in `/stimulus` are used for stimulus generation:  
 - **stimulusGenerationGlue.m** - Glueing script for generating full stimulus ensemble for an experiment, needs to be edited for use case in question  
