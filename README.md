@@ -9,12 +9,12 @@ For more on SFG see (among others):
 - [Tóth et al., 2016. EEG signatures accompanying auditory figure-ground segregation](https://europepmc.org/article/PMC/5656226)
 <br></br>
 ## Dependencies / environment
-The study relies on [Psychtoolbox 3.0.16](https://psychtoolbox.org/) under Ubuntu 18.04 for stimulus generation/presentation. While Psychtoolbox is compatible with Octave, development is for Matlab (2017a) and Octave compatibility is not tested. In principle though, adapting the functions to Octave should be simple. 
+The study relies on [Psychtoolbox 3.0.16](https://psychtoolbox.org/) under Ubuntu 18.04 for stimulus generation/presentation. While Psychtoolbox is compatible with Octave, code development is for Matlab (2017a) with Octave compatibility not tested. In principle though, adapting the functions to Octave should be simple. 
 
 Stimulus presentation settings / parameters are specified for the Mordor lab at RCNS, Budapest. We rely on a two-X-screens setup (two independent displays): one for stimulus presentation, one for control. Subject responses are recorded via standard keyboards. For EEG, TTL-logic level triggers are supported via the great [ppdev-mex interface by Andreas Widmann](https://github.com/widmann/ppdev-mex). Optional loudness curve correction in stimulus generation (using the filter coefficients stored in OEM_iir_51_fs44100.mat) is based on [HUTear Matlab toolbox v2 by Aki Härmä and Kalle Palomäki](http://legacy.spa.aalto.fi/software/HUTear/HUTear.html). 
 <br></br>
 ## How to start
-Just include the subfolders in your path. For stimulus presentation functions make sure (1) you have a working Psychtoolbox setup, preferably under Linux; and (2) that all Screen, PsychportAudio, etc. settings in the relevant functions are matched to your setup.  
+Just include the subfolders in your path. For stimulus presentation functions make sure (1) you have a working Psychtoolbox setup, preferably under Linux; and (2) that all Screen, PsychPortAudio, etc. settings in the relevant functions are matched to your setup.<br></br>  
 #### (1) Check out SFG stimuli 
 Take a look at a stimulus first. Define a stimulus options struct by calling SFGparams.m: 
 ```
@@ -29,11 +29,12 @@ The matrix `soundOutput` holds the raw audio of the stimulus, play it with any m
 fig = plotChordsSingleStim(soundOutput, stimopt, allFigFreqs, allBackgrFreqs);
 ```
 If all is well, the right side of the plotted figure (spectrogram of audio) matches the left side (chord components the stimulus should be built from).<br></br>
-If you have working PsychportAudio, play around with the main stimulus option in an interactive playback loop using SFGtesting:
+You can also play around with the main stimulus options in an interactive playback loop using SFGtesting:
 ```
 SFGtesting(false);  % see the help for OEMfiltering and base stimulus options
 ```
 
+#### (2) Generate stimuli in batches
 ## List of all functions
 Functions in `/stimulus` are used for stimulus generation:  
 - **stimulusGenerationGlue.m** - Glueing script for generating full stimulus ensemble for an experiment, needs to be edited for use case in question  
