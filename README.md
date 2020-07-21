@@ -1,20 +1,30 @@
 # SFG_aging_study
 Matlab code for the ongoing research project _**Testing aging deficits in auditory object perception**_ at the **Sound and Speech Perception Research Group** at TTK, Budapest (Winkler lab). Project PI: Brigitta Tóth.
-
 <br></br>
 ## On SFG
-   SFG stands for Stochastic Figure-Ground, a stimulus type used in auditory research that combines sets of randomly selected tones from a broad frequency range (*Background*) with short sequences of repeated tones (*Figure*). The latter is regularly perceived as an auditory object, that is, as a sound source separate from the background. 
-
+SFG stands for Stochastic Figure-Ground, a stimulus type used in auditory research that combines sets of randomly selected tones from a broad frequency range (*Background*) with short sequences of repeated tones (*Figure*). The latter is regularly perceived as an auditory object, that is, as a sound source separate from the background. 
 For more on SFG see (among others):  
 - [Teki et al., 2011. Brain bases for auditory stimulus-driven figure–ground segregation](https://www.jneurosci.org/content/jneuro/31/1/164.full.pdf)  
 - [O'Sullivan et al., 2015. Evidence for neural computations of temporal coherence in an auditory scene and their enhancement during active listening](https://www.jneurosci.org/content/jneuro/35/18/7256.full.pdf)
 - [Tóth et al., 2016. EEG signatures accompanying auditory figure-ground segregation](https://europepmc.org/article/PMC/5656226)
 <br></br>
 ## Dependencies / environment
-The study relies on [Psychtoolbox](https://psychtoolbox.org/) under Ubuntu 18.04 for stimulus generation/presentation. While Psychtoolbox is compatible with Octave, development is for Matlab (2017a) and Octave compatibility is not tested. In principle though, adapting the functions to Octave should be simple. 
+The study relies on [Psychtoolbox 3.0.16](https://psychtoolbox.org/) under Ubuntu 18.04 for stimulus generation/presentation. While Psychtoolbox is compatible with Octave, development is for Matlab (2017a) and Octave compatibility is not tested. In principle though, adapting the functions to Octave should be simple. 
 
-Stimulus presentation settings / parameters are specified for the Mordor lab at RCNS, Budapest. We rely on a two-X-screens setup (two independent displays): one for stimulus presentation, one for control. Subject responses are recorded via standard keyboards. For EEG, TTL-logic level triggers are supported via the great ppdev-mex interface by Andreas Widmann. 
+Stimulus presentation settings / parameters are specified for the Mordor lab at RCNS, Budapest. We rely on a two-X-screens setup (two independent displays): one for stimulus presentation, one for control. Subject responses are recorded via standard keyboards. For EEG, TTL-logic level triggers are supported via the great [ppdev-mex interface by Andreas Widmann](https://github.com/widmann/ppdev-mex). Optional loudness curve correction in stimulus generation (using the filter coefficients stored in OEM_iir_51_fs44100.mat) is based on [HUTear Matlab toolbox v2 by Aki Härmä and Kalle Palomäki](http://legacy.spa.aalto.fi/software/HUTear/HUTear.html). 
 <br></br>
+## Start
+Just include the subfolders in your path. For stimulus presentation functions make sure (1) you have a working Psychtoolbox setup, preferably under Linux; and (2) that all Screen, PsychportAudio, etc. settings in the relevant functions are matched to your setup.  
+### Check out SFG stimuli 
+First define a stimulus options struct by calling SFGparams.m: 
+```
+stimopt = SFGparams;
+```
+Type `help SFGparams` for the meaning of each field. Change any field value then call
+```
+[soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt)
+```
+The matrix `soundOutput` holds the audio data for the stimulus.  
 ## Usage
 Functions in `/stimulus` are used for stimulus generation:  
 - **stimulusGenerationGlue.m** - Glueing script for generating full stimulus ensemble for an experiment, needs to be edited for use case in question  
@@ -30,7 +40,7 @@ Functions in `/presentation` for stimulus presentation and recording responses:
 - **stim2blocks.m** - Helper function detecting unique stimulus types in a stimulus array and sorting them into the required number of blocks. Ensures that the same number of stimuli from each stimulus type is in each block (basic counterbalancing across blocks).
 <br></br>
 ## Citation
-Code is free to all (MIT license) but please cite earlier work by the group:
+Code is free to all (GNU Public license v2) but please cite earlier work by the group:
 
 Tóth, Brigitta, Zsuzsanna Kocsis, Gábor P. Háden, Ágnes Szerafin, Barbara G. Shinn-Cunningham, and István Winkler. "EEG signatures accompanying auditory figure-ground segregation." Neuroimage 141 (2016): 108-119. https://doi.org/10.1016/j.neuroimage.2016.07.028
 
