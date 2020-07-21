@@ -15,16 +15,21 @@ Stimulus presentation settings / parameters are specified for the Mordor lab at 
 <br></br>
 ## Start
 Just include the subfolders in your path. For stimulus presentation functions make sure (1) you have a working Psychtoolbox setup, preferably under Linux; and (2) that all Screen, PsychportAudio, etc. settings in the relevant functions are matched to your setup.  
-### Check out SFG stimuli 
-First define a stimulus options struct by calling SFGparams.m: 
+#### (1) Check out SFG stimuli 
+Take a look at a stimulus first. Define a stimulus options struct by calling SFGparams.m: 
 ```
 stimopt = SFGparams;
 ```
-Type `help SFGparams` for the meaning of each field. Change any field value then call
+Type `help SFGparams` for the meaning of each field. Change any field value you want then call
 ```
-[soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt)
+[soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt);  % add "true" as second input arg for OEMfiltering
 ```
-The matrix `soundOutput` holds the audio data for the stimulus.  
+The matrix `soundOutput` holds the raw audio of the stimulus. To check if the generated audio reflects the stimulus options, run the plotting function plotChordsSingleStim:
+```
+fig = plotChordsSingleStim(soundOutput, stimopt, allFigFreqs, allBackgrFreqs);
+```
+If all is well, the right side of the plotted figure (spectrogram of audio) matches the left side (chord components the stimulus should be built from). 
+
 ## Usage
 Functions in `/stimulus` are used for stimulus generation:  
 - **stimulusGenerationGlue.m** - Glueing script for generating full stimulus ensemble for an experiment, needs to be edited for use case in question  
