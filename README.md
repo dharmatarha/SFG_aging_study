@@ -13,7 +13,7 @@ The study relies on [Psychtoolbox 3.0.16](https://psychtoolbox.org/) under Ubunt
 
 Stimulus presentation settings / parameters are specified for the Mordor lab at RCNS, Budapest. We rely on a two-X-screens setup (two independent displays): one for stimulus presentation, one for control. Subject responses are recorded via standard keyboards. For EEG, TTL-logic level triggers are supported via the great [ppdev-mex interface by Andreas Widmann](https://github.com/widmann/ppdev-mex). Optional loudness curve correction in stimulus generation (using the filter coefficients stored in OEM_iir_51_fs44100.mat) is based on [HUTear Matlab toolbox v2 by Aki Härmä and Kalle Palomäki](http://legacy.spa.aalto.fi/software/HUTear/HUTear.html). 
 <br></br>
-## Start
+## How to start
 Just include the subfolders in your path. For stimulus presentation functions make sure (1) you have a working Psychtoolbox setup, preferably under Linux; and (2) that all Screen, PsychportAudio, etc. settings in the relevant functions are matched to your setup.  
 #### (1) Check out SFG stimuli 
 Take a look at a stimulus first. Define a stimulus options struct by calling SFGparams.m: 
@@ -22,15 +22,19 @@ stimopt = SFGparams;
 ```
 Type `help SFGparams` for the meaning of each field. Change any field value you want then call
 ```
-[soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt);  % add "true" as second input arg for OEMfiltering
+[soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt);  % see the help for loudness correction (OEMfiltering) option
 ```
-The matrix `soundOutput` holds the raw audio of the stimulus. To check if the generated audio reflects the stimulus options, run the plotting function plotChordsSingleStim:
+The matrix `soundOutput` holds the raw audio of the stimulus, play it with any method you prefer (e.g. quick check with `sound(soundOutput, stimopt.sampleFreq)`. To check if the generated audio reflects the stimulus options, run the plotting function plotChordsSingleStim:
 ```
 fig = plotChordsSingleStim(soundOutput, stimopt, allFigFreqs, allBackgrFreqs);
 ```
-If all is well, the right side of the plotted figure (spectrogram of audio) matches the left side (chord components the stimulus should be built from). 
+If all is well, the right side of the plotted figure (spectrogram of audio) matches the left side (chord components the stimulus should be built from).<br></br>
+If you have working PsychportAudio, play around with the main stimulus option in an interactive playback loop using SFGtesting:
+```
+SFGtesting(false);  % see the help for OEMfiltering and base stimulus options
+```
 
-## Usage
+## List of all functions
 Functions in `/stimulus` are used for stimulus generation:  
 - **stimulusGenerationGlue.m** - Glueing script for generating full stimulus ensemble for an experiment, needs to be edited for use case in question  
 - **SFGparams.m** - Basic parameters for stimuli generation
