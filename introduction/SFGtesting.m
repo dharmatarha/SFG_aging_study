@@ -1,4 +1,4 @@
-function SFGtesting(stimopt, OEMfiltering)
+function SFGtesting(varargin)
 
 %% Script to play around with SFG stimuli
 % 
@@ -7,7 +7,9 @@ function SFGtesting(stimopt, OEMfiltering)
 % A simple command line application that asks you to specify SFG stimulus
 % properties coherence, duration, stepsize and no. of tones and then
 % proceeds to generate and play the stimulus. Runs in a loop - you can
-% generate and listen to as many stimuli as you want.
+% generate and listen to as many stimuli as you want. 
+%
+% Uses PsychPortAudio (Psychtoolbox).
 %
 % Optional inputs:
 % stimopt       - Struct. Its fields contain default stimulus options, some of
@@ -21,28 +23,36 @@ function SFGtesting(stimopt, OEMfiltering)
 %
 
 
-%% Basics
+%% Input checks
 
-% input checks
+% check number of inputs
 if ~ismembertol(nargin, 0:2)
     error('Function SFGtesting expects at maximum two (optional) input args, "stimopt" and "OEMfiltering"!');
 end
-if nargin == 1
-    OEMfiltering = true;
-elseif nargin == 0
+% check optional input args
+if ~isempty(varargin)
+    for v = 1:length(varargin)
+        if isstruct(varargin{v}) && ~exist('stimopt', 'var')
+            stimopt = varargin{v};
+        elseif islogical(varargin{v}) && numel(varargin{v})==1 && ~exist('OEMfiltering', 'var')
+            OEMfiltering = varargin{v};
+        else
+            error('At least one input arg could not be matched nicely to "stimopt" or "OEMfiltering"!');
+        end
+    end
+end
+% assign defaults
+if ~exist('stimopt', 'var')
     stimopt = SFGparamsIntro;
 end
-if ~isstruct(stimopt)
-    error('Input arg "stimopt" should be a struct, for fields see "help SFGparams"!');
-end
-if ~islogical(OEMfiltering) || numel(OEMfiltering)~=1
-    error('Input arg "OEMfiltering" should be a logical value!');
+if ~exist('OEMfiltering', 'var')
+    OEMfiltering = true;
 end
 
 % user message
 disp('Started SFGtesting with base SFG params: ');
 disp(stimopt);
-disp('OEMfiltering set to: ', num2str(OEMfiltering)); 
+disp(['OEMfiltering set to: ', num2str(OEMfiltering)]); 
 
 
 %% Psychtoolbox & PsychPortAudio setup, params & settings
@@ -170,8 +180,9 @@ while 1
             backgrFlag = 1;
             disp([char(10), 'No. of background tones is set to ', num2str(inputRes)]);
             disp(['Overall, there will be ', num2str(stimopt.toneComp),... 
-                ' tone components.\n For the figure, ', num2str(stimopt.figureCoh),... 
-                ' of them will move coherently', char(10)]);
+                ' tone components.', char(10),... 
+                num2str(stimopt.figureCoh),... 
+                ' of them will move coherently and form the figure', char(10)]);
         else
             disp([char(10), 'Wrong value, try again', char(10)]);
         end  
