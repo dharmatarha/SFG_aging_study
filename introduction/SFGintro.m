@@ -1,7 +1,7 @@
-function SFGintro(subNum, stimopt, OEMfiltering)
+function SFGintro(subNum, stimopt, loudnessEq)
 %% Function to familiarize subjects with SFG stimuli
 %
-% USAGE: SFGintro(subNum, stimopt=SFGparamsIntro, OEMfiltering=true)
+% USAGE: SFGintro(subNum, stimopt=SFGparamsIntro, loudnessEq=true)
 %
 % Gives control to the subject to request stimuli either without figure or
 % with an easily recognizable figure. Two connected displays are assumed,
@@ -16,11 +16,13 @@ function SFGintro(subNum, stimopt, OEMfiltering)
 %               stimulus. Passed to createSingleSFGstim for generating 
 %               stimuli. See SFGparamsIntro for details. Defaults to
 %               calling SFGparamsIntro.
-% OEMfiltering  - Logical value. Flag for loading and applying a filter
-%               correcting for loudness distortions (see loudness curves),
-%               passed on to createSingleSFGstimulus. Defaults to "true",
-%               which in turn requires an "OEM_*.mat" file containing
-%               filter coeffs located in pwd.
+% loudnessEq    - Logical value. Flag for correcting for the perceived
+%               loudness of different frequency components (see equal
+%               loudness curves). Defaults to false. Gets passed on to 
+%               createSingleSFGstim. 
+%               If "true", the necessary gains for the frequencies specified
+%               in "stimopt" are derived from the outputs of the iso226.m 
+%               and are applied to the pure sine components.
 %
 
 
@@ -28,13 +30,13 @@ function SFGintro(subNum, stimopt, OEMfiltering)
 
 if ~ismembertol(nargin, 1:3)
     error(['Function SFGintro requires input arg "subNum" while input ',...
-        'args "stimopt" and "OEMfiltering" are optional!']);
+        'args "stimopt" and "loudnessEq" are optional!']);
 end
 if nargin == 1
     stimopt = SFGparamsIntro;
-    OEMfiltering = true;
+    loudnessEq = true;
 elseif nargin == 2
-    OEMfiltering = true;
+    loudnessEq = true;
 end
 if ~ismembertol(subNum, 1:999)
     error('Input arg "subNum" should be between 1 - 999!');
@@ -42,8 +44,8 @@ end
 if ~isstruct(stimopt)
     error('Input arg "stimopt" is expected to be a struct!');
 end
-if ~islogical(OEMfiltering) || numel(OEMfiltering)~=1
-    error('Input arg "OEMfiltering" should be a logical value!');
+if ~islogical(loudnessEq) || numel(loudnessEq)~=1
+    error('Input arg "loudnessEq" should be a logical value!');
 end
 
 % Workaround for a command window text display bug - too much printing to
@@ -55,7 +57,7 @@ clc;
 
 disp([char(10), 'Called function SFGintro with inputs: ',...
      char(10), 'subject number: ', num2str(subNum),...
-     char(10), 'OEMfiltering is set to: ', num2str(OEMfiltering),...
+     char(10), 'loudness correction flag is set to: ', num2str(loudnessEq),...
      char(10), 'stimulus options: ']);
 disp(stimopt);
 
@@ -307,12 +309,12 @@ while 1  % until abort is requested
     % create stimulus - with or without figure
     if nextTrial == 1
         % create next stimulus and load it into buffer
-        [soundOutput, ~, ~] = createSingleSFGstim(stimoptFigure, OEMfiltering);
+        [soundOutput, ~, ~] = createSingleSFGstim(stimoptFigure, loudnessEq);
         buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
         PsychPortAudio('FillBuffer', pahandle, buffer); 
     elseif nextTrial == 0
         % create next stimulus and load it into buffer
-        [soundOutput, ~, ~] = createSingleSFGstim(stimoptNoFigure, OEMfiltering);
+        [soundOutput, ~, ~] = createSingleSFGstim(stimoptNoFigure, loudnessEq);
         buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
         PsychPortAudio('FillBuffer', pahandle, buffer);         
     end
