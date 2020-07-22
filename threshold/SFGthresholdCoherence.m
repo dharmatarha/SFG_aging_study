@@ -1,7 +1,7 @@
 function SFGthresholdCoherence(subNum, varargin)
 %% Quest threshold for SFG stimuli aimed at estimating the effect of coherence
 %
-% USAGE: SFGthresholdCoherence(subNum, stimopt=SFGparamsThreshold, trialMax=90, OEMfiltering=true)
+% USAGE: SFGthresholdCoherence(subNum, stimopt=SFGparamsThreshold, trialMax=90, loudnessEq=true)
 %
 % The procedure changes the coherence level using the adaptive staircase
 % procedure QUEST. Fixed trial + QuestSd check approach, that is, the
@@ -29,19 +29,20 @@ function SFGthresholdCoherence(subNum, varargin)
 %               SFGparamsThreshold.m
 % trialMax      - Numeric value, number of trials used for staircase
 %               procedure, one of 10:120. Defaults to 90.
-% OEMfiltering  - Logical value. Flag for loading and applying a filter
-%               correcting for loudness distortions (see loudness curves),
-%               passed on to createSingleSFGstimulus. Defaults to "true",
-%               which in turn requires an "OEM_*.mat" file containing
-%               filter coeffs located in pwd.
+% loudnessEq    - Logical value. Flag for correcting for the perceived
+%               loudness of different frequency components (see equal
+%               loudness curves). Defaults to false. Gets passed on to 
+%               createSingleSFGstim. 
+%               If "true", the necessary gains for the frequencies specified
+%               in "stimopt" are derived from the outputs of the iso226.m 
+%               and are applied to the pure sine components.
 %
 % Output:
 % q             - Quest object.
 %
 % NOTES:
-% (1) We need to implement inner checks on the robustness of the estimate.
-% E.g. initial wrong answers at high SNR levels might throw the estimates
-% off.
+% (1) Pay attention to Quest outcomes as inattentive / fatiqued / etc
+% subjects might have unrealistic results at first.
 %
 %
 
@@ -50,7 +51,7 @@ function SFGthresholdCoherence(subNum, varargin)
 
 % check no. of args
 if ~ismember(nargin, 1:4) 
-    error('Function SFGthresholdCoherence needs mandatory input arg "subNum" while args "stimopt", "trialMax" and "OEMfiltering" are optional!');
+    error('Function SFGthresholdCoherence needs mandatory input arg "subNum" while args "stimopt", "trialMax" and "loudnessEq" are optional!');
 end
 % check mandatory input arg
 if ~ismembertol(subNum, 1:999)
@@ -63,10 +64,10 @@ if ~isempty(varargin)
             stimopt = varargin{v};
         elseif isnumeric(varargin{v}) && ismembertol(varargin{v}, 10:120) && ~exist('trialMax', 'var')
             trialMax = varargin{v};
-        elseif islogical(varargin{v}) && numel(varargin{v})==1 && ~exist('OEMfiltering', 'var')
-            OEMfiltering = varargin{v};            
+        elseif islogical(varargin{v}) && numel(varargin{v})==1 && ~exist('loudnessEq', 'var')
+            loudnessEq = varargin{v};            
         else
-            error('An input arg could not be mapped nicely to "stimopt", "trialMax" or "OEMfiltering"!');
+            error('An input arg could not be mapped nicely to "stimopt", "trialMax" or "loudnessEq"!');
         end
     end
 end
@@ -77,8 +78,8 @@ end
 if ~exist('trialMax', 'var')
     trialMax = 90;
 end
-if ~exist('OEMfiltering', 'var')
-    OEMfiltering = true;
+if ~exist('loudnessEq', 'var')
+    loudnessEq = true;
 end
 
 % Workaround for a command window text display bug - too much printing to
@@ -92,7 +93,7 @@ clc;
 disp([char(10), 'Called function SFGthresholdCoherence with inputs: ',...
      char(10), 'subNum: ', num2str(subNum),...
      char(10), 'number of trials for Quest: ', num2str(trialMax),...
-     char(10), 'OEMfiltering is set to: ', num2str(OEMfiltering),...
+     char(10), 'loudness correction flag is set to: ', num2str(loudnessEq),...
      char(10), 'stimulus params: ']);
 disp(stimopt);
 disp([char(10), 'TARGET THRESHOLD IS SET TO 85%!']);
@@ -362,7 +363,7 @@ elseif trialType(1) == 1  % if there is a figure in current trial
 end
 
 % query a stimulus
-[soundOutput, ~, ~] = createSingleSFGstim(stimopt, OEMfiltering);
+[soundOutput, ~, ~] = createSingleSFGstim(stimopt, loudnessEq);
 
 % fill audio buffer with next stimuli
 buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
@@ -493,7 +494,7 @@ while trialN < trialMax  || (SDestFlag == 0 && trialN < (trialMax+trialExtraMax)
         disp(['Coherence level is set to: ', num2str(stimopt.figureCoh)]);
         
         % create next stimulus and load it into buffer
-        [soundOutput, ~, ~] = createSingleSFGstim(stimopt, OEMfiltering);
+        [soundOutput, ~, ~] = createSingleSFGstim(stimopt, loudnessEq);
         buffer = PsychPortAudio('CreateBuffer', [], soundOutput);
         PsychPortAudio('FillBuffer', pahandle, buffer);        
         
