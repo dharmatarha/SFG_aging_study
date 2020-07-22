@@ -1,8 +1,8 @@
 
-function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt, OEMfiltering)
+function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt, loudnessEq)
 %% Generates a single SFG stimulus
 %
-% USAGE: [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt, OEMfiltering=false)
+% USAGE: [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt, loudnessEq=false)
 %
 % Returns two-channel audio (2 X samples) of SFG stimulus for the
 % parameters passed in stimopt struct. To be used in cases where an
@@ -12,17 +12,17 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 % stimopt.figureCoh (figure coherence) to 0.
 %
 % Mandatory input:
-% stimopt       - struct containing stimulus parameters (both for 
-%               background and figure). The list of fields required is
-%               below, for details see SFGparams.m
+% stimopt           - struct containing stimulus parameters (both for 
+%                   background and figure). The list of fields required is
+%                   below, for details see SFGparams.m
 %
 % Optional input:
-% OEMfiltering  - Logical value. Flag for loading and applying a filter
-%               correcting for loudness distortions (see loudness curves).
-%               Defaults to "false". If "true", loads filter coeffs "a" 
-%               and "b" from a file called "OEM_*.mat" in current working 
-%               directory. Filter is applied with filter(a, b, signal)
-%               command.
+% loudnessEq        - Logical value. Flag for correcting for the perceived
+%                   loudness of different frequency components (see equal
+%                   loudness curves). Defaults to false. If "true", the
+%                   necessary gains for the frequencies specified in
+%                   "stimopt" are derived from the outputs of the iso226.m and
+%                   are applied to the pure sine components.
 %
 % Outputs:
 % soundOutput       - Numeric matrix corresponding to the audio stimulus.
@@ -42,43 +42,27 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 %
 % NOTES:
 % (1) Check the resulting stimuli with plotChordsSingleStim.m
-% (2) Typical stimopt struct:
-% stimopt = struct( ...
-%     'totalDur', 2, ...
-%     'chordDur', 0.05, ...
-%     'toneComp', 24, ...
-%     'toneFreqSetL', 129, ...
-%     'toneFreqMin', 179, ...
-%     'toneFreqMax', 7246, ...
-%     'chordOnset', 0.01, ...
-%     'figureDur', 12, ...
-%     'figureCoh', 4, ...
-%     'figureMinOnset', 0.3, ...
-%     'figureOnset', nan,...
-%     'figureStepS', -2, ...
-%     'sampleFreq', 44100, ...
-%     'randomSeed', 'some seed here');
-% (3) On our lab machines it should reliably run in ~50 ms, taking 
-%   slightly longer on occasion. Allocating 100 ms should be more than
-%   enough.
+% (2) Look at the help of SFGparams for the meaning of stimopt fields.
+% (3) On everyday PCs a run is ~50 ms, taking slightly longer on occasion. 
+%   Allocating ~100 ms should be more than enough.
 % (4) Fix number of tones/chord, that is, figure coherence and background 
 % tones always add up to the same total tone no. 
 %
 % Based on earlier scripts by Tamas Kurics, Zsuzsanna Kocsis and Botond 
 % Hajdu, ex-members of the lab.
-% date: January 2020
+%
 
 
 %% Input checks
 
 if ~ismembertol(nargin, [1, 2])
-    error('Function createSingleSFGstim requires input arg "stimopt" while input arg "OEMfiltering" is optional!');
+    error('Function createSingleSFGstim requires input arg "stimopt" while input arg "loudnessEq" is optional!');
 end
 if nargin == 1
-    OEMfiltering = false;
+    loudnessEq = false;
 end
-if ~islogical(OEMfiltering) || numel(OEMfiltering)~=1
-    error('Input arg "OEMfiltering" should be a logical value!');
+if ~islogical(loudnessEq) || numel(loudnessEq)~=1
+    error('Input arg "loudnessEq" should be a logical value!');
 end
 if ~isstruct(stimopt)
     error('Input arg "stimopt" is expected to be a struct!');
@@ -95,18 +79,22 @@ if isfield(stimopt, 'randomSeed')
     end
 end
 
-% load filter coeffs if OEMfiltering flag is true
-if OEMfiltering 
-    filterFile = dir([pwd, '/OEM_*.mat']);
-    if length(filterFile) ~= 1
-        error('Could not find or found multiple versions of the filter coeffs file "OEM_*.mat"!');
-    end
-    filterCoeffs = load([filterFile.folder, '/', filterFile.name]);
-end
-
 % generating logarithmically uniform frequency range for the random
 % background
 logFreq = linspace(log(stimopt.toneFreqMin), log(stimopt.toneFreqMax), stimopt.toneFreqSetL);
+
+% assign a scalar power (loudness) correction parameter for each possible
+% frequency
+if loudnessEq
+    % query equal loudness curve values (spl in dB) for current frequency 
+    % values at 60 phons
+    phonLevel = 60;
+    spl = iso226(phonLevel, exp(logFreq));
+    % get gain from spl dB
+    splGains = 10.^((spl-phonLevel)/20);
+    % adjust for power, not linear value
+    splPowerGains = splGains.^0.5;
+end
 
 % number of chords in the stimulus
 stimulusChordNumber = floor(stimopt.totalDur / stimopt.chordDur);
@@ -193,6 +181,13 @@ for chordPos = 1:stimulusChordNumber
         % creating figure tones for this chord
         figureTones = sin(2*pi*diag(figureFrequencies)*repmat(timeNodes, length(figureFrequencies), 1));
         
+        % apply loudness corrections if requested
+        if loudnessEq
+            % match frequency components to gains
+            [~, gainIdx] = ismembertol(figureFrequencies, round(exp(logFreq)));
+            figureTones = diag(splPowerGains(gainIdx))*figureTones;
+        end
+        
         % store figure freq values for chord
         allFigFreqs(:, chordPos) = figureFrequencies';
         
@@ -212,6 +207,13 @@ for chordPos = 1:stimulusChordNumber
     % creating the tones for the background
     backgroundTones = sin(2*pi*diag(backgroundFreqs)*repmat(timeNodes,length(backgroundFreqs),1));
 
+    % apply loudness corrections if requested
+    if loudnessEq
+        % match frequency components to gains
+        [~, gainIdx] = ismembertol(backgroundFreqs, round(exp(logFreq)));
+        backgroundTones = diag(splPowerGains(gainIdx))*backgroundTones;
+    end    
+    
     % sum background plus figure, apply onset-offset ramp
     if (chordPos >= figureStartInterval) && (chordPos <= figureEndInterval)
         chord = (sum(backgroundTones, 1) + sum(figureTones, 1)) .* onsetOffsetRamp;
@@ -221,15 +223,9 @@ for chordPos = 1:stimulusChordNumber
     
     % chord data into aggregate stimulus array
     soundOutput(1:2, soundIndex:soundIndex+numberOfSamples-1) = repmat(chord, [2, 1]);  % both channels contain the same stimulus
-    soundIndex = soundIndex + numberOfSamples;    
-
+    soundIndex = soundIndex + numberOfSamples;          
+    
 end  % chord for loop
-
-% apply loudness correction (OEM filter) if OEMfiltering flag is true
-if OEMfiltering
-    soundOutput(1, :) = filter(filterCoeffs.a, filterCoeffs.b, soundOutput(1, :));
-    soundOutput(2, :) = filter(filterCoeffs.a, filterCoeffs.b, soundOutput(2, :));
-end
 
 % normalize left and right output to the range -1 <= amplitude <= 1
 maxSoundOutput = max(max(abs(soundOutput)));
