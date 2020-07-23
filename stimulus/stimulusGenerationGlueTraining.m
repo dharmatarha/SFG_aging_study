@@ -3,16 +3,11 @@ function stimulusGenerationGlueTraining(varargin)
 %
 % USAGE: stimulusGenerationGlueTraining(paramValues=[7, 10, 20; 8, 10, 20; 9, 10, 20;...], trialMax=60; loudnessEq=true)
 %
-% The goal is to generate training stimuli similar to those used in 
-% O'Sullivan et al., 2015, Evidence for Neural Computations of Temporal 
-% Coherence... (www.jneurosci.org/content/jneuro/35/18/7256.full.pdf) 
-% and in Tóth et al., 2016,  EEG signatures accompanying auditory 
-% figure-ground segregation
-% (www.sciencedirect.com/science/article/pii/S1053811916303354)
-% Relative to Tóth et al., here we:
-% - drop the location manipulation
-% - use a fixed number of tones/chord
-% - use one fix duration value
+% Our goal is generate training stimuli similar to those used in 
+% Toth et al., 2016
+% (https://www.sciencedirect.com/science/article/pii/S1053811916303354?via%3Dihub).
+% The main difference is that we drop the location manipulation, use a
+% fixed number of tone components and a fixed figure duration.
 % 
 % Current glue script generates "trialMax" training stimuli. Each
 % figure type defined by "paramValues" is represented equally in the
