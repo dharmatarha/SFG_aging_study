@@ -62,7 +62,7 @@ end
 if ~isstruct(stimopt) || isempty(stimopt)
     error('Input arg "stimopt" should be a struct with a number of predefined fields! Check the help and/or SFGparams.m!');
 end
-% check filtering flag value 
+% check loudness correction flag value 
 if ~islogical(loudnessEq) || numel(loudnessEq)~=1
     error('Input arg "loudnessEq" should be a logical value!');
 end
@@ -263,12 +263,6 @@ for stimNo = 1:NStimuli
         soundIndex = soundIndex + numberOfSamples;    
 
     end  % chordPos for loop
-
-    % apply loudness correction (OEM filter) if loudnessEq flag is true
-    if loudnessEq
-        soundOutput(1, :) = filter(filterCoeffs.a, filterCoeffs.b, soundOutput(1, :));
-        soundOutput(2, :) = filter(filterCoeffs.a, filterCoeffs.b, soundOutput(2, :));
-    end
     
     % normalize left and right output to the range -1 <= amplitude <= 1
     maxSoundOutput = max(max(abs(soundOutput)));

@@ -141,28 +141,27 @@ stimopt = SFGparams();
 counter = 1;
 
 % loop over stimulus types
-for t = 1:stimTypeNo
+for type = 1:stimTypeNo/2
     
     % change params accordingly
-    stimopt.figureCoh = paramValues(t, 1);    
-    stimopt.figureDur = paramValues(t, 2);
-    stimopt.toneComp = paramValues(t, 3);
+    stimopt.figureCoh = paramValues(type, 1);    
+    stimopt.figureDur = paramValues(type, 2);
+    stimopt.toneComp = paramValues(type, 3);
     
-    % figure / no figure
-    for f = figValues
-        
-        % change params accordingly
-        if ~f
-            stimopt.figureCoh = 0;
-        end  
+    % generate stimuli with figure
+    stimTypeDirs{counter} = createSFGstimuli(trialPerType, stimopt, loudnessEq);
+    
+    % update counter
+    counter = counter+1;
+    
+    % set stimoipt to "no figure"
+    stimopt.figureCoh = 0;
             
-        % generate stimuli
-        stimTypeDirs{counter} = createSFGstimuli(trialPerType, stimopt, loudnessEq);
-        
-        % update counter
-        counter = counter+1;
-            
-    end  % for f
+    % generate stimuli without figure
+    stimTypeDirs{counter} = createSFGstimuli(trialPerType, stimopt, loudnessEq);  
+    
+    % update counter
+    counter = counter+1;
     
 end  % for t
 

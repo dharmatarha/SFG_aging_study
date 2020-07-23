@@ -1,1 +1,2 @@
-- fix loudness correction handling in /stimulus/createSFGstim, /stimulus/stimulusGenerationGlue*, /training and /presentation
+- descriptions in README for a) stimulus batch generation; b) threshold estimations; c) one full experimental run  
+- edit licenses to include: MIT license for iso226

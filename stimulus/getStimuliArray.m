@@ -11,17 +11,17 @@ function stimArray = getStimuliArray(folders)
 %               be created with createSFGstimuli script,
 %               that is, to contain wav files (one per stimulus) and a csv
 %               file with metadata. If there is only one folder, simple
-%               string is sufficient as well.
+%               char array is sufficient as well.
 %
 % Output:
-% stimArray    - Cell array of cells, each with size "no. of stimuli" X 11. 
-%               Column 11 contains raw audio data matrices
+% stimArray    - Cell array of cells, each with size "no. of stimuli" X 12. 
+%               Column 12 contains raw audio data matrices
 %
 % Notes         (1) We expect the param csv files to have the following
 %               columns:
 %               {'filename', 'totalDuration_sec', 'chordDuration_sec', 'chordOnset_sec', ...
 %                 'figPresent', 'figureDuration', 'figureCoherence', 'sampleFrequency_Hz', ...
-%                 'figureStartInterval', 'figureEndInterval'};
+%                 'figureStartInterval', 'figureEndInterval', 'toneComp'};
 %
 
 %% Input check
