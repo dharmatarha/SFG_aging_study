@@ -1,7 +1,7 @@
 function stimulusGenerationGlueTraining(varargin)
 %% Function glueing stimulus generation steps together for training
 %
-% USAGE: stimulusGenerationGlueTraining(paramValues=[7, 10, 20; 8, 10, 20; 9, 10, 20;...], trialMax=60; OEMfiltering=true)
+% USAGE: stimulusGenerationGlueTraining(paramValues=[7, 10, 20; 8, 10, 20; 9, 10, 20;...], trialMax=60; loudnessEq=true)
 %
 % The goal is to generate training stimuli similar to those used in 
 % O'Sullivan et al., 2015, Evidence for Neural Computations of Temporal 
@@ -25,13 +25,15 @@ function stimulusGenerationGlueTraining(varargin)
 % contain a figure while the other half will not. 
 %
 % Input arg "paramValues" manipulates figure coherence, duration and overall
-% tone component number (see SFGparams.m for stimuli parameter details) 
-% over successive calls to createSFGstimuli.m. Default values result in 60
-% training trials. Sorting stimuli into blocks is not handled by the 
-% current function, that task falls to stim2blocksTraining.m 
+% tone component number (stimopt.figureCoh, stimopt.figureDur and 
+% stimopt.toneComp - see SFGparams for stimuli parameter details) 
+% over successive calls to createSFGstimuli.m. Sorting stimuli into blocks 
+% is not handled by the current function, that task falls to 
+% stim2blocksTraining.
 %
 % The function creates a folder with subfolders for stimulus types, and a
-% cell array accumulating all stimuli together, saved out into a .mat file
+% cell array accumulating all stimuli together, saved out into a 
+% "stimArrayTraining*.mat" file
 %
 % Optional inputs:
 % paramValues   - Numeric matrix with three columns. Columns hold arrays
@@ -44,11 +46,13 @@ function stimulusGenerationGlueTraining(varargin)
 % trialMax      - Numeric value, one of 12:120. Number of trials to 
 %               generate. Must be multiple of size(paramValues, 1)*2. 
 %               Defaults to 60.
-% OEMfiltering  - Logical value. Flag for loading and applying a filter
-%               correcting for loudness distortions (see loudness curves),
-%               passed on to createSFGstimulus. Defaults to "true",
-%               which in turn requires an "OEM_*.mat" file containing
-%               filter coeffs located in pwd.
+% loudnessEq    - Logical value. Flag for correcting for the perceived
+%               loudness of different frequency components (see equal
+%               loudness curves). Defaults to false. Gets passed on to 
+%               createSFGstim. 
+%               If "true", the necessary gains for the frequencies specified
+%               in "stimopt" are derived from the outputs of iso226
+%               and are applied to the pure sine components.
 %
 % NOTES:
 % (1) The script relies on the following functions:
@@ -66,7 +70,7 @@ function stimulusGenerationGlueTraining(varargin)
 
 if ~ismembertol(nargin, 0:3)
     error(['Input arg error! Function stimulusGenerationGlueTraining might ',...
-        'take optional input args "paramValues", "trialMax" and "OEMfiltering"!']);
+        'take optional input args "paramValues", "trialMax" and "loudnessEq"!']);
 end
 % check optional input args
 if ~isempty(varargin)
@@ -78,10 +82,10 @@ if ~isempty(varargin)
         elseif isnumeric(varargin{v}) && ismembertol(varargin{v}, 12:120) &&...
                 mod(varargin{v}, size(paramValues, 1)*2)==0 && ~exist('trialMax', 'var') 
             trialMax = varargin{v};
-        elseif islogical(varargin{v}) && numel(varargin{v})==1 && ~exist('OEMfiltering', 'var')
-            OEMfiltering = varargin{v};
+        elseif islogical(varargin{v}) && numel(varargin{v})==1 && ~exist('loudnessEq', 'var')
+            loudnessEq = varargin{v};
         else
-            error('At least one input arg could not be matched nicely to "paramValues", "trialMax" or "OEMfiltering"!');
+            error('At least one input arg could not be matched nicely to "paramValues", "trialMax" or "loudnessEq"!');
         end
     end
 end
@@ -92,8 +96,8 @@ end
 if ~exist('trialMax', 'var')
     trialMax = 60;
 end
-if ~exist('OEMfiltering', 'var')
-    OEMfiltering = true;
+if ~exist('loudnessEq', 'var')
+    loudnessEq = true;
 end
 
 % Workaround for a command window text display bug - too much printing to
@@ -106,7 +110,7 @@ clc;
 % user message
 disp([char(10), 'Called function stimulusGenerationGlueTraining with args: ',... 
     char(10), 'Number of trials to generate: ', num2str(trialMax),...
-    char(10), 'OEMfiltering is set to: ', num2str(OEMfiltering),...
+    char(10), 'loudnessEq is set to: ', num2str(loudnessEq),...
     char(10), 'Figure (stimulus) types in terms of figure coherence, duration and tone component no. (columns): ']);
 disp(paramValues);
 
@@ -158,7 +162,7 @@ for t = 1:stimTypeNo
         end  
             
         % generate stimuli
-        stimTypeDirs{counter} = createSFGstimuli(trialPerType, stimopt, OEMfiltering);
+        stimTypeDirs{counter} = createSFGstimuli(trialPerType, stimopt, loudnessEq);
         
         % update counter
         counter = counter+1;

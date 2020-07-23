@@ -1,4 +1,3 @@
-
 function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt, loudnessEq)
 %% Generates a single SFG stimulus
 %
@@ -12,16 +11,15 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 % stimopt.figureCoh (figure coherence) to 0.
 %
 % Mandatory input:
-% stimopt           - struct containing stimulus parameters (both for 
-%                   background and figure). The list of fields required is
-%                   below, for details see SFGparams.m
+% stimopt           - Struct containing stimulus parameters (both for 
+%                   background and figure). For details see SFGparams
 %
 % Optional input:
 % loudnessEq        - Logical value. Flag for correcting for the perceived
 %                   loudness of different frequency components (see equal
 %                   loudness curves). Defaults to false. If "true", the
 %                   necessary gains for the frequencies specified in
-%                   "stimopt" are derived from the outputs of the iso226.m and
+%                   "stimopt" are derived from the outputs of iso226 and
 %                   are applied to the pure sine components.
 %
 % Outputs:
@@ -35,17 +33,16 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 %                   background contruction. Its size is no. of tone 
 %                   components X no. of chords
 %
-% Fields of stimopt struct:
+% Look at the help of SFGparams for the meaning of stimopt fields:
 % sampleFreq, chordOnset, chordDur, figureMinOnset, figureOnset, 
 % totalDur, toneComp, toneFreqMax, toneFreqMin, 
 % toneFreqSetL, figureDur, figureCoh, figureStepS
 %
 % NOTES:
-% (1) Check the resulting stimuli with plotChordsSingleStim.m
-% (2) Look at the help of SFGparams for the meaning of stimopt fields.
-% (3) On everyday PCs a run is ~50 ms, taking slightly longer on occasion. 
+% (1) Check the resulting stimuli with plotChordsSingleStim
+% (2) On everyday PCs a run is ~50 ms, taking slightly longer on occasion. 
 %   Allocating ~100 ms should be more than enough.
-% (4) Fix number of tones/chord, that is, figure coherence and background 
+% (3) Fix number of tones/chord, that is, figure coherence and background 
 % tones always add up to the same total tone no. 
 %
 % Based on earlier scripts by Tamas Kurics, Zsuzsanna Kocsis and Botond 
@@ -55,7 +52,7 @@ function [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimop
 
 %% Input checks
 
-if ~ismembertol(nargin, [1, 2])
+if ~ismembertol(nargin, 1:2)
     error('Function createSingleSFGstim requires input arg "stimopt" while input arg "loudnessEq" is optional!');
 end
 if nargin == 1
@@ -77,6 +74,11 @@ if isfield(stimopt, 'randomSeed')
     if ~isempty(stimopt.randomSeed) && isnumeric(stimopt.randomSeed)
         rng(stimopt.randomSeed); 
     end
+end
+
+% check the range of figureOnset
+if stimopt.figureOnset < ceil(stimopt.figureMinOnset/stimopt.chordDur)  % comparison with NaN value gives 0 (False)
+    error('The supplied figure onset value is below the minimum onset value!');
 end
 
 % generating logarithmically uniform frequency range for the random
