@@ -66,7 +66,31 @@ for i=1:NStimuli;
     close(fig);
 end
 ```
-#### (3) Run the experiment
+For a study we usually need a number of different stimuli sets (e.g. stimuli with a *Figure* and stimuli without one, that is, with figureCoh=0). The tool `getStimuliArray` takes as input a cell array of wav folders (outputs if `createSFGstimuli`) and collects all stimuli together with their main parameters into one big array:
+```
+stimopt = SFGparams;
+% figure coherence values for generating stimuli
+cohValues = [0 10];
+% number of SFG stimuli for each run of createSFGstimuli
+NStimuli = 20;
+% var to hold wav dir names
+sfgDirs = cell(length(cohValues), 1);
+
+% generate stimuli
+for i = 1:length(cohValues)
+    stimopt.figureCoh = cohValues(i);
+    sfgDirs{i} = createSFGstimuli(NStimuli, stimopt, true);
+end
+    
+% collect all stimuli into one array
+stimArray = getStimuliArray(sfgDirs);
+% concatenate cell arrays of different stimulus types
+stimArray = vertcat(stimArray{:});
+disp(stimArray)
+
+```
+
+### Run the experiment
 
 
 ## List of all functions
