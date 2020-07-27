@@ -44,7 +44,7 @@ function stimulusGenerationGlueTraining(varargin)
 % loudnessEq    - Logical value. Flag for correcting for the perceived
 %               loudness of different frequency components (see equal
 %               loudness curves). Defaults to false. Gets passed on to 
-%               createSFGstim. 
+%               createSFGstimuli. 
 %               If "true", the necessary gains for the frequencies specified
 %               in "stimopt" are derived from the outputs of iso226
 %               and are applied to the pure sine components.

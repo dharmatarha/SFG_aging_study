@@ -75,8 +75,8 @@ disp([char(10), 'Properties of SFG stimulus according to parameters in stimopt:'
 
 %% Plotting: chord info and spectrogram into two subplots 
 
-% % we leave this here so that we can create multiple figures when calling
-% % the function in a loop
+% we use a figure handle so that we can create multiple figures when calling
+% he function in a loop
 fig = figure;
 
 % plot detailed chord info first (left)

@@ -5,7 +5,7 @@ function [eValues, eMeans, p, stats] = getEnDiff(folderA, folderB)
 %
 % This function tests for acoustic energy difference between two sets of 
 % stimuli. We expect the two sets to be in two separate folders (default 
-% createSFGstim behavior). 
+% createSFGstimuli behavior). 
 %
 % Inputs:
 % folderA               - Char array, path to a folder with wav files, each

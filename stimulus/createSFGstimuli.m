@@ -187,7 +187,11 @@ for stimNo = 1:NStimuli
 
     % add steps
     figureFreqsPerChord = repmat(figureStartFreqIdx', [1, stimopt.figureDur]);
-    allFigureSteps = 0:stimopt.figureStepS:(stimopt.figureDur-1)*stimopt.figureStepS;  % all steps in one vector
+    if stimopt.figureStepS ~= 0
+        allFigureSteps = 0:stimopt.figureStepS:(stimopt.figureDur-1)*stimopt.figureStepS;  % all steps in one vector
+    else
+        allFigureSteps = zeros(1, stimopt.figureDur);  % steps are just zeros, if figureStepS is 0
+    end
     allFigureSteps = repmat(allFigureSteps, [stimopt.figureCoh, 1]);  % put steps into a matrix, one row for each figure component
     figureFreqsPerChord = figureFreqsPerChord+allFigureSteps;  % each column contains logFreq indices for one figure chord
         

@@ -1,5 +1,5 @@
 function stimArray = getStimuliArray(folders)
-%% Function to summarize figure-ground stimuli into one big stimuli mat file
+%% Function to summarize SFG stimuli into one big stimuli mat file
 %
 % USAGE: stimArray = getStimuliArray(folders)
 %
