@@ -33,7 +33,6 @@ You can also play around with the main stimulus options in an interactive playba
 ```
 SFGtesting(false);  % see the help for loudness correction and base stimulus options
 ```
-<br></br>
 #### (2) Generate stimuli in batches
 Generate a set of stimuli with the function `createSFGstimuli`. First define a stimulus options struct:
 ```
@@ -55,7 +54,18 @@ fig = plotChords(wavDir, 1);
 ```
 Or run it in a loop to generate and save a figure for each stimulus in `wavDir`:
 ```
+wavFiles = dir([wavDir, '/*.wav']);  % list of wav files
+for i=1:20; 
+    fig = plotChords(wavDir, i);
+    % generate a .png file name from the path of the wav file
+    [~, wavName, ~] = fileparts(wavFiles(i).name);
+    figFile=[wavFiles(i).folder, '/', wavName, '.png'];
+    saveas(fig, figFile);
+    close(fig);
+end
 ```
+#### (3) Run the experiment
+
 
 ## List of all functions
 Functions in `/stimulus` are used for stimulus generation:  
