@@ -89,6 +89,12 @@ stimArray = vertcat(stimArray{:});
 disp(stimArray)
 
 ```
+The last column in stimArray holds the raw audio. Any sorting into blocks / types can now be done easily using this cell array. <br></br>
+The above process is implemented for specific settings in "glueing" scripts (`stimulusGenerationGlueTraining` and `stimulusGenerationGlueThresholded`). For example, our training stimuli set can be generated simply by:
+```
+stimulusGenerationGlueTraining;
+```
+
 
 ### Run the experiment
 
