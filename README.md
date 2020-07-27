@@ -96,7 +96,7 @@ stimulusGenerationGlueTraining;
 ```
 
 
-### Run the experiment
+## Run the experiment
 
 
 ## List of all functions
