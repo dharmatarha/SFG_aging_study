@@ -98,8 +98,36 @@ stimulusGenerationGlueTraining;
 
 ## Run the experiment
 
+Introduce the task to the subject:
+```
+subNum = 99;
+SFGintro(subNum);
+```
 
-## List of all functions
+Run a training session: 6 blocks with 10 trials each. Blocks go from easy to less-easy in terms of coherence. Requires either a pre-generated training stimuli set named `stimArrayTraining.mat` or a path to a specific stimuli set.
+```
+SFGtraining(subNum);
+```
+
+Threshold estimations for specific accuracy levels:
+```
+SFGthresholdCoherence(subNum);
+```
+```
+SFGthresholdBackground(subNum);
+```
+
+Stimulus generation based on thre results of the threshold estimation sessions
+```
+stimulusGenerationGlueThresholded(subNum);
+```
+
+Main part of the experiment: 10 blocks with 80 trials each. Random order.
+```
+SFGmain(subNum);
+```
+
+## List of functions
 Functions in `/stimulus` are used for stimulus generation:  
 - **stimulusGenerationGlue.m** - Glueing script for generating full stimulus ensemble for an experiment, needs to be edited for use case in question  
 - **SFGparams.m** - Basic parameters for stimuli generation
