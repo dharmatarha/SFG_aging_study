@@ -33,6 +33,7 @@ You can also play around with the main stimulus options in an interactive playba
 ```
 SFGtesting(false);  % see the help for loudness correction and base stimulus options
 ```
+
 #### (2) Generate stimuli in batches
 Generate a set of stimuli with the function `createSFGstimuli`. First define a stimulus options struct:
 ```
@@ -41,10 +42,11 @@ disp(stimopt);
 ```
 Let's generate a set of 20 SFG stimuli with a coherence level of 12, figure duration of 9, loudness correction flag set to "true" and a step size of 0 (that is, *Figure* is simply composed of repetitions of the same tones). Background tones, figure tone components and figure onset (if stimopt.figureOnset==NaN) will vary randomly across members of the set. 
 ```
+NStimuli = 20;
 stimopt.figureCoh = 12;
 stimopt.figureDur = 9;
 stimopt.figureStepS = 0;
-wavDir = createSFGstimuli(20, stimopt, true)  % batch stimuli generation, loudness correction set to true
+wavDir = createSFGstimuli(NStimuli, stimopt, true)  % batch stimuli generation, loudness correction set to true
 ```
 SFG stimuli are saved out into `wavDir`, together with the stimulus options used for their generation (`*_stimopt.mat`). A `*_StimuliData.csv` file containing the main parameters of each stimulus / file is also present, just as a `*_chordInfo.mat` file containing detailed chord information. 
 To check any stimulus in the set, use `plotChords`:
@@ -55,7 +57,7 @@ fig = plotChords(wavDir, 1);
 Or run it in a loop to generate and save a figure for each stimulus in `wavDir`:
 ```
 wavFiles = dir([wavDir, '/*.wav']);  % list of wav files
-for i=1:20; 
+for i=1:NStimuli; 
     fig = plotChords(wavDir, i);
     % generate a .png file name from the path of the wav file
     [~, wavName, ~] = fileparts(wavFiles(i).name);
