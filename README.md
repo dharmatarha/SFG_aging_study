@@ -11,7 +11,7 @@ For more on SFG see (among others):
 ## Dependencies / environment
 The study relies on [Psychtoolbox 3.0.16](https://psychtoolbox.org/) under Ubuntu 18.04 for stimulus generation/presentation. While Psychtoolbox is compatible with Octave, code development is for Matlab (2017a) with Octave never tested. In principle though, adapting the functions to Octave should be simple. 
 
-Stimulus presentation settings / parameters are specified for the Mordor lab at RCNS, Budapest. We rely on a two-X-screens setup (two independent displays): one for stimulus presentation, one for control. Subject responses are recorded via standard keyboards. For EEG, TTL-logic level triggers are supported via the great [ppdev-mex interface by Andreas Widmann](https://github.com/widmann/ppdev-mex).
+Stimulus presentation settings / parameters are specified for the Mordor lab at RCNS, Budapest. We rely on a two-X-screens setup (two independent displays): one for stimulus presentation, one for control. Subject responses are recorded via standard keyboards. For EEG, TTL-logic level triggers are supported via the great [ppdev-mex interface by Andreas Widmann](https://github.com/widmann/ppdev-mex). For loudness perception corrections we rely on the [iso226 interpolation by Christopher Hummersone](https://github.com/IoSR-Surrey/MatlabToolbox/blob/master/%2Biosr/%2Bauditory/iso226.m).
 <br></br>
 ## How to start
 Just include the repo (with its subfolders) in your path. For stimulus presentation functions make sure (1) you have a working Psychtoolbox setup, preferably under Linux; and (2) that all Screen, PsychPortAudio, etc. settings in the relevant functions are matched to your setup.<br></br>  
@@ -24,7 +24,7 @@ Type `help SFGparams` for the meaning of each field. Change any field value you 
 ```
 [soundOutput, allFigFreqs, allBackgrFreqs] = createSingleSFGstim(stimopt);  % see the help for loudness correction option (loudnessEq flag)
 ```
-The matrix `soundOutput` holds the raw audio of the stimulus, play it with any method you prefer (e.g. quick check with `sound(soundOutput, stimopt.sampleFreq)`. To check if the generated audio reflects the stimulus options, run the plotting function plotChordsSingleStim:
+The matrix `soundOutput` holds the raw audio of the stimulus - play it with any method you prefer (e.g. quick check with `sound(soundOutput, stimopt.sampleFreq)`. To check if the generated audio reflects the stimulus options, run the plotting function plotChordsSingleStim:
 ```
 fig = plotChordsSingleStim(soundOutput, stimopt, allFigFreqs, allBackgrFreqs);
 ```
@@ -89,7 +89,7 @@ stimArray = vertcat(stimArray{:});
 disp(stimArray)
 
 ```
-The last column in stimArray holds the raw audio. Any sorting into blocks / types can now be done easily using this cell array. <br></br>
+The last column in the variable `stimArray` holds the raw audio. Any sorting into blocks / types can now be done easily using this cell array. <br></br>
 The above process is implemented for specific settings in "glueing" scripts (`stimulusGenerationGlueTraining` and `stimulusGenerationGlueThresholded`). For example, our training stimuli set can be generated simply by:
 ```
 stimulusGenerationGlueTraining;
@@ -98,31 +98,34 @@ stimulusGenerationGlueTraining;
 
 ## Run the experiment
 
-Introduce the task to the subject:
+Introduce the task by calling `SFGintro(subjectNumber)`. The aim of this phase is for participants to understand what tye of object we ask them to detect. During the introduction, the participant can initiate the playback of a stimulus with or without a figure in each trial. 
 ```
+% all experimental scripts are called with the subject number
 subNum = 99;
 SFGintro(subNum);
 ```
 
-Run a training session: 6 blocks with 10 trials each. Blocks go from easy to less-easy in terms of coherence. Requires either a pre-generated training stimuli set named `stimArrayTraining.mat` or a path to a specific stimuli set.
+Run a training session next with `SFGtraining(subjectNumber)`. Participants' task is to indicate with key presses in each trial whether they heard a *Figure* or not in the stimulus (yes-no detection task). Half of the trials contain a *Figure*. Importantly, there is visual feedback after each trial. The training phase consists of 6 blocks with 10 trials each. Blocks go from easy to less-easy in terms of coherence. Requires either a pre-generated training stimuli set named `stimArrayTraining.mat` or a path to a specific stimuli set (and corresponding edits to `stim2blocksTraining`).
 ```
 SFGtraining(subNum);
 ```
 
+In our setup, we aim to generate an "easy" and a "hard" set of participant-specific stimuli. The "easy" set should elicit a ~85% rate of correct responses while the hard is amed at ~65%. To achieve this we rely on individual thresholding using the [Quest procedure by A. B. Watson and D. G. Pelli](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.534.7583&rep=rep1&type=pdf) as implemented in Psychtoolbox. First, we set the coherence level while holding the number of all tone components (*Figure* + *Background*) constant. This is done by `SFGthresholdCoherence`:    
 Threshold estimations for specific accuracy levels:
 ```
 SFGthresholdCoherence(subNum);
 ```
+Then we fix the coherence level at the result of the coherence-thresholding procedure and start adding background tones in a second Quest run aimed at the "hard" set of SFG stimuli:   
 ```
 SFGthresholdBackground(subNum);
 ```
 
-Stimulus generation based on thre results of the threshold estimation sessions
+Based on the outcomes of the thresholding procedures we generate four types of participant-specific stimuli: (1) "Easy" trials with *Figure*; (2) "Easy" trials without *Figure*; (3) "Hard" trials with *Figure*; (4) "Hard" trials without *Figure*. Stimulus generation is handled by a function glueing together more basic steps:
 ```
 stimulusGenerationGlueThresholded(subNum);
 ```
 
-Main part of the experiment: 10 blocks with 80 trials each. Random order.
+In the main part of the experiment, participants' task is the same as in training: yes-no detection task. We use 10 blocks with 80 trials each. Trials are ordered randomly. Unlike in training, there is no feedback at the end of the trials. We record EEG from this phase.
 ```
 SFGmain(subNum);
 ```
