@@ -74,8 +74,43 @@ end
 
 % easily recognizable version 
 stimoptFigure = stimopt;
-stimoptFigure.figureCoh = 14;
-disp([char(10), 'Stimulus settings for easily-recognizable version: ']);
+stimoptFigure.figureCoh = 18;
+
+% ask user to verify coherence level of figure / provide a different
+% value
+cohFlag = 0;
+while ~cohFlag  
+    % verify current coherence level
+    inputRes = input([char(10), 'Coherence level for the figure is currently set at ',... 
+        num2str(stimoptFigure.figureCoh), '. If that is fine, type "y", otherwise type "n": ',...
+        char(10)], 's');
+    % check value, set flag if default coherence value is okay
+    if strcmp(inputRes, 'y')
+        cohFlag = 1;
+        disp([char(10), 'Great, coherence level is kept at ', num2str(stimoptFigure.figureCoh), char(10)]);
+    % ask for new value if default value was rejected
+    elseif strcmp(inputRes, 'n')
+        % inner input while loop
+        newCohFlag = 0;
+        while ~newCohFlag
+            % get new coherence value
+            inputRes = input([char(10), 'Please provide a new value for coherence level (between 1-20): ', char(10)]);
+            % check value
+            if ismember(inputRes, 1:20)
+                stimoptFigure.figureCoh = inputRes;
+                newCohFlag = 1; cohFlag = 1;
+                disp([char(10), 'Coherence level is set to ', num2str(inputRes), char(10)]);
+            else
+                disp([char(10), 'Wrong value, try again', char(10)]);
+            end
+        end
+    else
+        disp([char(10), 'Wrong value, try again', char(10)]);
+    end
+end
+        
+% user message
+disp([char(10), 'Stimulus settings for easily-recognizable figure version: ']);
 disp(stimoptFigure);
 
 % stimulus with no figure
