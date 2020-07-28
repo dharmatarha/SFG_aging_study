@@ -120,32 +120,54 @@ Then we fix the coherence level at the result of the coherence-thresholding proc
 SFGthresholdBackground(subNum);
 ```
 
-Based on the outcomes of the thresholding procedures we generate four types of participant-specific stimuli: (1) "Easy" trials with *Figure*; (2) "Easy" trials without *Figure*; (3) "Hard" trials with *Figure*; (4) "Hard" trials without *Figure*. Stimulus generation is handled by a function glueing together more basic steps:
+Based on the outcomes of the thresholding procedures we generate four types of participant-specific stimuli: (1) "Easy" trials with *Figure*; (2) "Easy" trials without *Figure*; (3) "Hard" trials with *Figure*; (4) "Hard" trials without *Figure*. 200-200 stimuli are generated for each type. Stimulus generation is handled by a function glueing together more basic steps:
 ```
 stimulusGenerationGlueThresholded(subNum);
 ```
 
-In the main part of the experiment, participants' task is the same as in training: yes-no detection task. We use 10 blocks with 80 trials each. Trials are ordered randomly. Unlike in training, there is no feedback at the end of the trials. We record EEG from this phase.
+In the main part of the experiment, participants' task is the same as in training: yes-no detection task. We use the SFG stimuli generated in the previous step, sorting them into 10 blocks, with 80 trials in each block. Trials are ordered randomly. Unlike in training, there is no feedback at the end of the trials. We record EEG from this phase.
 ```
 SFGmain(subNum);
 ```
 
 ## List of functions
-Functions in `/stimulus` are used for stimulus generation:  
-- **stimulusGenerationGlue.m** - Glueing script for generating full stimulus ensemble for an experiment, needs to be edited for use case in question  
-- **SFGparams.m** - Basic parameters for stimuli generation
-- **createSFGstimuli.m** - Generates given number of stimuli for specific parameters
-- **getStimuliArray.m** - Aggregates stimulus (sub)sets into full ensemble
-- **plotChords.m** - Diagnostic and visualization tool: plot the chords defining a given stimulus next to its spectrogram
-- **getEnDiff.m** - Diagnostic tool testing for acoustic energy differences between two stimuli (sub)sets
 
-Functions in `/presentation` for stimulus presentation and recording responses:  
-- **SFGmain.m** - Main experimental script responsible for stimulus presentation and recording responses. Requires the rest of the functions under `/presentation`. Good enough for piloting, doesn't fully handle yet triggers for EEG. Responses are expected via regualar keyboards.
-- **expParamsHandler.m** - Helper function for detecting existing parameters/settings and results for subjects in a multi-session experiment. Also handles loading and sorting of stimuli, saving subject-specific parameters, etc. Requires stim2blocks.m
-- **stim2blocks.m** - Helper function detecting unique stimulus types in a stimulus array and sorting them into the required number of blocks. Ensures that the same number of stimuli from each stimulus type is in each block (basic counterbalancing across blocks).
+See the `help` of each function for details.
+
+Functions in `/stimulus` are used for stimulus generation: 
+- **SFGparams.m** - Base SFG parameters for stimuli generation
+- **createSFGstimuli.m** - Generates given number of stimuli for specific parameters
+- **createSingleSFGstim.m** - Generates one stimulus for specific parameters
+- **plotChords.m** - Diagnostic and visualization tool: plot the chords defining a given stimulus next to its spectrogram. To be used for stimuli generated with **createSFGstimuli.m**
+- **plotChordsSingleStim.m** - Diagnostic and visualization tool: plot the chords defining a given stimulus next to its spectrogram. To be used for a stimulus generated with **createSingleSFGstim.m**
+- **stimulusGenerationGlueTraining.m** - Glueing script generating the stimulus ensemble for the training phase  
+- **stimulusGenerationGlueThresholded.m** - Glueing script generating the stimulus ensemble for the main part of the experiment, based on the outcomes of the thresholding functions
+- **getStimuliArray.m** - Aggregates stimulus (sub)sets into full ensemble 
+- **getEnDiff.m** - Diagnostic tool testing for acoustic energy differences between two stimuli (sub)sets
+- **iso226.m** - ISO226 implementation with interpolation - returns the sound pressure level (SPL dB) of requested frequencies at the loudness level specified (phon). [From here.](https://github.com/IoSR-Surrey/MatlabToolbox/blob/master/%2Biosr/%2Bauditory/iso226.m) 
+
+Functions in `/introduction` are used for quick tests and the introduction phase:
+- **SFGparamsIntro.m** - Base SFG parameters specific to the introduction phase
+- **SFGintro.m** - Experimental script for the introduction phase
+- **SFGtesting.m** - Function to try out and test different parameters quickly, without any Psychtoolbox visuals.
+
+Functions in `/training` are used for the training phase:
+- **stim2blockTraining.m** - Helper function detecting unique stimulus types in a given SFG stimulus ensemble file and sorting them into blocks for the training phase.
+- **SFGtraining.m** - Experimental script for the training phase
+
+Functions in `/threshold` are used for deriving individual SFG parameter estimates before the main experimental phase:
+- **SFGparamsThreshold.m** - Base SFG parameters specific to the thresholding (SFG parameter estimation) phase
+- **SFGthresholdCoherence.m** - Experimental script running a Quest procedure estimating the SFG coherence level for given accuracy (85% in our case)
+- **SFGthresholdBackground.m** - Experimental script running a Quest procedure estimating the SFG tone component number (and thus the no. of background tones) for given accuracy (65% in our case)
+
+Functions in `/presentation` are used for the main experimental phase (stimulus presentation and recording responses):  
+- **stim2blocks.m** - Helper function detecting unique stimulus types in a given SFG stimulus ensemble file and sorting them into the required number of blocks. Ensures that the same number of stimuli from each stimulus type is in each block (basic counterbalancing across blocks).
+- **expParamsHandler.m** - Helper function for detecting existing parameters/settings and results for subjects in a multi-session experiment. Also handles loading and sorting of stimuli, saving subject-specific parameters, etc.
+- **SFGmain.m** - Main experimental script responsible for stimulus presentation and recording responses. 
+
 <br></br>
 ## Citation
-Code is free to all (GNU Public license v2) but please cite earlier work by the group:
+Code is free to all (GNU Public license v2) but please cite the repo and earlier work by the group:
 
 Tóth, Brigitta, Zsuzsanna Kocsis, Gábor P. Háden, Ágnes Szerafin, Barbara G. Shinn-Cunningham, and István Winkler. "EEG signatures accompanying auditory figure-ground segregation." Neuroimage 141 (2016): 108-119. https://doi.org/10.1016/j.neuroimage.2016.07.028
 
