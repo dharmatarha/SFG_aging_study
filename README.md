@@ -31,7 +31,7 @@ fig = plotChordsSingleStim(soundOutput, stimopt, allFigFreqs, allBackgrFreqs);
 If all is well, the right side of the plotted figure (spectrogram of audio) matches the left side (chord components the stimulus should be built from).<br></br>
 You can also play around with the main stimulus options in an interactive playback loop using SFGtesting:
 ```
-SFGtesting(false);  % see the help for loudness correction and base stimulus options
+SFGtesting;  % see the help for loudness correction and base stimulus options
 ```
 
 #### (2) Generate stimuli in batches
