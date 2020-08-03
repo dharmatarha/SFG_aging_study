@@ -1,11 +1,10 @@
 Most of the project is under GNU-GPL v2 license except for the 
-[iso226.m script copied from Christopher Hummersone](https://github.com/IoSR-Surrey/MatlabToolbox/blob/master/%2Biosr/%2Bauditory/iso226.m)
+iso226.m script copied from Christopher Hummersone
+(https://github.com/IoSR-Surrey/MatlabToolbox/blob/master/%2Biosr/%2Bauditory/iso226.m)
 which is under The MIT license. 
 
-Full texts of licenses are below:
-
                    
-*For iso226.m:*
+For iso226.m:
 
 The MIT License (MIT)
 
@@ -31,7 +30,8 @@ SOFTWARE.
                    
 
 
-*For the rest of the project:*
+
+For the rest of the project:
 
                    
                     GNU GENERAL PUBLIC LICENSE
