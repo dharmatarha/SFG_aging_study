@@ -1,7 +1,7 @@
 function stimulusGenerationGlueTraining(varargin)
 %% Function glueing stimulus generation steps together for training
 %
-% USAGE: stimulusGenerationGlueTraining(paramValues=[7, 10, 20; 8, 10, 20; 9, 10, 20;...], trialMax=60; loudnessEq=true)
+% USAGE: stimulusGenerationGlueTraining(paramValues=[8, 10, 20; 10, 10, 20; 12, 10, 20;...], trialMax=60; loudnessEq=true)
 %
 % Our goal is generate training stimuli similar to those used in 
 % Toth et al., 2016
@@ -35,7 +35,7 @@ function stimulusGenerationGlueTraining(varargin)
 %               for figureCoh, figureDur and toneComp values (see
 %               SFGparams.m for details on parameters). Rows must be unique
 %               and will correspond to the figure types in the generated
-%               set. Defaults to coherence values 7:12, while duration
+%               set. Defaults to coherence values 8:2:18, while duration
 %               and toneComp values are held constant at 10 and 20,
 %               respectively.
 % trialMax      - Numeric value, one of 12:120. Number of trials to 
@@ -43,8 +43,8 @@ function stimulusGenerationGlueTraining(varargin)
 %               Defaults to 60.
 % loudnessEq    - Logical value. Flag for correcting for the perceived
 %               loudness of different frequency components (see equal
-%               loudness curves). Defaults to false. Gets passed on to 
-%               createSFGstimuli. 
+%               loudness curves). Defaults to true. Gets passed on to 
+%               createSFGstim. 
 %               If "true", the necessary gains for the frequencies specified
 %               in "stimopt" are derived from the outputs of iso226
 %               and are applied to the pure sine components.
@@ -86,7 +86,7 @@ if ~isempty(varargin)
 end
 % assign default values
 if ~exist('paramValues', 'var')
-    paramValues = [[7:12]', ones(6, 1)*10, ones(6, 1)*20];
+    paramValues = [[8:2:18]', ones(6, 1)*10, ones(6, 1)*20];
 end
 if ~exist('trialMax', 'var')
     trialMax = 60;
