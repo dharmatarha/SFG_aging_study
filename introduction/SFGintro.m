@@ -18,7 +18,7 @@ function SFGintro(subNum, stimopt, loudnessEq)
 %               calling SFGparamsIntro.
 % loudnessEq    - Logical value. Flag for correcting for the perceived
 %               loudness of different frequency components (see equal
-%               loudness curves). Defaults to false. Gets passed on to 
+%               loudness curves). Defaults to true. Gets passed on to 
 %               createSingleSFGstim. 
 %               If "true", the necessary gains for the frequencies specified
 %               in "stimopt" are derived from the outputs of the iso226.m 
