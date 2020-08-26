@@ -45,6 +45,8 @@ function SFGthresholdBackground(subNum, varargin)
 % NOTES:
 % (1) Pay attention to Quest outcomes as inattentive / fatiqued / etc
 % subjects might have unrealistic results at first.
+% (2) In no-figure trials, the tone component number is its last value + 
+% a small jitter (random value from -2:1:2). HARDCODED VALUES 
 %
 
 
@@ -174,13 +176,13 @@ disp([char(10), 'Setting params for Quest and initializing the procedure']);
 % log SNR scale of possible stimuli, for Quest
 % levels are defined for background tone numbers as
 % 1:stimopt.toneComp-stimopt.figCoh
-backgroundLevels = stimopt.toneComp-baseCoherence:stimopt.toneComp+10;  % HARDCODED MAX BACKGROUNDLEVEL
+backgroundLevels = stimopt.toneComp-baseCoherence-3:stimopt.toneComp+10;  % HARDCODED MIN AND MAX BACKGROUNDLEVEL
 snrLevels = baseCoherence./backgroundLevels;  % broadcasting in Matlab! :)
 snrLogLevels = log(snrLevels);
 
 % settings for quest 
 qopt = struct;
-qopt.tGuess = -0.84;  % prior threshold guess, -0.84 equals an SNR of ~0.43 (backgroundlevel=21 at a coherence level of 9 and stimopt.toneComp=20), we start with lot of added noise
+qopt.tGuess = -0.61;  % prior threshold guess, -0.84 equals an SNR of ~0.43 (backgroundlevel=21 at a coherence level of 9 and stimopt.toneComp=20), we start with lot of added noise
 qopt.tGuessSd = 5;  % SD of prior guess
 qopt.beta = 3.5;  % Weibull steepness, 3.5 is the default used for a wide range of stimuli 
 qopt.delta = 0.02;  % ratio of "blind" / "accidental" responses
@@ -393,6 +395,8 @@ elseif trialType(1) == 1
     tTest=QuestMean(q); 
     % find the closest SNR level we have
     [~, closestSnrIdx] = min(abs(snrLogLevels-tTest));
+    % get corresponding intensity (log SNR) - will be used for Quest update
+    lastIntensity = snrLogLevels(closestSnrIdx);
     % update stimopt accordingly - we get the required number of background
     % tones indirectly, via manipulating the total number of tones
     stimopt.toneComp = backgroundLevels(closestSnrIdx)+baseCoherence;
@@ -503,7 +507,7 @@ while trialN < trialMax  || (SDestFlag == 0 && trialN < (trialMax+trialExtraMax)
             else
                 questResp = figDetect(trialN-1);
             end
-            q = QuestUpdate(q, tTest, questResp);
+            q = QuestUpdate(q, lastIntensity, questResp);
         end
         
     end
@@ -512,9 +516,10 @@ while trialN < trialMax  || (SDestFlag == 0 && trialN < (trialMax+trialExtraMax)
     if trialN ~= 1    
         
         % if current trial is a catch trial, without figure, stimopt.figureCoh is set to zero
-        % also, stimopt.toneComp just remains the last value it was set to
+        % stimopt.toneComp is set to its last value + jitter
         if trialType(trialN) == 0
             stimopt.figureCoh = 0;  % no figure
+            stimopt.toneComp = stimopt.toneComp + randi([-2 2]);
             
         % else stimopt.figureCoh is set to the base coherence value, and 
         % stimopt.toneComp is adjusted according to Quest
@@ -525,6 +530,8 @@ while trialN < trialMax  || (SDestFlag == 0 && trialN < (trialMax+trialExtraMax)
             tTest=QuestMean(q); 
             % find the closest SNR level we have
             [~, closestSnrIdx] = min(abs(snrLogLevels-tTest));
+            % get corresponding intensity (log SNR) - will be used for Quest update
+            lastIntensity = snrLogLevels(closestSnrIdx);            
             % update stimopt accordingly - we get the required number of background
             % tones indirectly, via manipulating the total number of tones
             stimopt.toneComp = backgroundLevels(closestSnrIdx)+baseCoherence;   

@@ -358,6 +358,8 @@ elseif trialType(1) == 1  % if there is a figure in current trial
     tTest=QuestMean(q); 
     % find the closest SNR level we have
     [~, closestSnrIdx] = min(abs(snrLogLevels-tTest));
+    % get corresponding intensity (log SNR) - will be used for Quest update
+    lastIntensity = snrLogLevels(closestSnrIdx);    
     % update stimopt accordingly
     stimopt.figureCoh = cohLevels(closestSnrIdx);
 end
@@ -468,7 +470,7 @@ while trialN < trialMax  || (SDestFlag == 0 && trialN < (trialMax+trialExtraMax)
             else
                 questResp = figDetect(trialN-1);
             end
-            q = QuestUpdate(q, tTest, questResp);
+            q = QuestUpdate(q, lastIntensity, questResp);
         end
         
     end
@@ -486,6 +488,8 @@ while trialN < trialMax  || (SDestFlag == 0 && trialN < (trialMax+trialExtraMax)
             tTest=QuestMean(q); 
             % find the closest SNR level we have
             [~, closestSnrIdx] = min(abs(snrLogLevels-tTest));
+            % get corresponding intensity (log SNR) - will be used for Quest update
+            lastIntensity = snrLogLevels(closestSnrIdx);             
             % update stimopt accordingly
             stimopt.figureCoh = cohLevels(closestSnrIdx);     
         end
