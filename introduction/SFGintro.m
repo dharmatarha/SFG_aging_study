@@ -68,7 +68,7 @@ disp(stimopt);
 disp([char(10), 'Preparing stimulus parameters for figure/no-figure stimuli']);
 
 % if there is a 'seed' field in stimopt, set the random num gen
-if isfield(stimopt, 'randomSeed')
+if isfield(stimopt, 'randomSeed') && ~isempty(stimopt.randomSeed)
     rng(stimopt.randomSeed);
 end
 
