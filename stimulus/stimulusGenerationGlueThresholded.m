@@ -5,7 +5,7 @@ function stimArrayFile = stimulusGenerationGlueThresholded(subNum, varargin)
 %
 % Our goal is generate stimuli similar to those used in Toth et al., 2016
 % (https://www.sciencedirect.com/science/article/pii/S1053811916303354?via%3Dihub).
-% The mian difference is that we drop the location manipulation and stimuli
+% The main difference is that we drop the location manipulation and stimuli
 % are generated based on earlier, subject-specific thresholding blocks. 
 % These blocks specify a "normal" and an "easy" stimulus type, defined in
 % terms of coherence level and number of background tones. The values used
@@ -20,7 +20,7 @@ function stimArrayFile = stimulusGenerationGlueThresholded(subNum, varargin)
 %                   generate. Must be multiple of four. Defaults to 800.
 % loudnessEq        - Logical value. Flag for correcting for the perceived
 %                   loudness of different frequency components (see equal
-%                   loudness curves). Defaults to false. Gets passed on to 
+%                   loudness curves). Defaults to true. Gets passed on to 
 %                   createSFGstimuli. 
 %                   If "true", the necessary gains for the frequencies specified
 %                   in "stimopt" are derived from the outputs of iso226

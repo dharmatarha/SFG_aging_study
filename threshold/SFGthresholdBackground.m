@@ -33,7 +33,7 @@ function SFGthresholdBackground(subNum, varargin)
 %               procedure, one of 10:120. Defaults to 80.
 % loudnessEq    - Logical value. Flag for correcting for the perceived
 %               loudness of different frequency components (see equal
-%               loudness curves). Defaults to false. Gets passed on to 
+%               loudness curves). Defaults to true. Gets passed on to 
 %               createSingleSFGstim. 
 %               If "true", the necessary gains for the frequencies specified
 %               in "stimopt" are derived from the outputs of the iso226.m 
@@ -180,7 +180,7 @@ snrLogLevels = log(snrLevels);
 
 % settings for quest 
 qopt = struct;
-qopt.tGuess = -0.51;  % prior threshold guess, -0.51 equals an SNR of ~0.60 at a coherence level of 9 and stimopt.toneComp=20
+qopt.tGuess = -0.84;  % prior threshold guess, -0.84 equals an SNR of ~0.43 (backgroundlevel=21 at a coherence level of 9 and stimopt.toneComp=20), we start with lot of added noise
 qopt.tGuessSd = 5;  % SD of prior guess
 qopt.beta = 3.5;  % Weibull steepness, 3.5 is the default used for a wide range of stimuli 
 qopt.delta = 0.02;  % ratio of "blind" / "accidental" responses
