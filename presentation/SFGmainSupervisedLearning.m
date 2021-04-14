@@ -216,7 +216,7 @@ trig.blockStart = 100;
 % unique stimulus feature combinations, with an index for each combination 
 % in the last column
 uniqueStimTypes = cell2mat(stimTypes(2:end,end));
-if length(uniqueStimTypes) > 49
+if length(uniqueStimTypes) > 4900
     error('Too many stimulus types for properly triggering them');
 end
 % triggers for stimulus types are integers in the range 151-199
@@ -429,8 +429,8 @@ for i = 1:size(stimArray,1)
 end
 
 % Exit conditions:
-minTrialCount = 10; % TODO 100
-minReversalCount = 3; % TODO 10
+minTrialCount = 100; % TODO 100
+minReversalCount = 7; % TODO 10
 
 %% Blocks loop
 
@@ -509,7 +509,7 @@ for block = startBlockNo:blockNo
     %% Trials loop
     
     % TODO
-    initialStepSize = 7;
+    initialStepSize = 80;
     staircaseHitThreshold = 3;
     staircaseMissThreshold = 1;
     

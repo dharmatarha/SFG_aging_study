@@ -72,7 +72,7 @@ if ~isempty(varargin)
 end
 % assign default values
 if ~exist('trialMax', 'var')
-    trialMax = 80;
+    trialMax = 400;
 end
 if ~exist('loudnessEq', 'var')
     loudnessEq = true;
