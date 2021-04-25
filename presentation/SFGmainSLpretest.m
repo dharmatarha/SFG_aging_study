@@ -1,15 +1,15 @@
-function SFGmainSupervisedLearning(subNum, varargin)
+function SFGmainSLpretest(subNum, varargin)
 Screen('Preference', 'SkipSyncTests', 1);  % TODO remove this
 %% Stochastic figure-ground experiment - main experimental script
 %
-% USAGE: SFGmain(subNum, stimArrayFile=./subjectXX/stimArray*.mat, blockNo=10, triggers='yes')
+% USAGE: SFGmainSLpretest(subNum, stimArrayFile=./subjectXX/stimArray*.mat, blockNo=10, triggers='yes')
 %
 % Stimulus presentation script for stochastic figure-ground (SFG) experiment. 
 % The script requires pre-generated stimuli organized into a
 % "stimArrayFile". See the functions in /stimulus for details on producing
 % stimuli. 
-% The script also requires stim2blocksSupervisedLearning.m for sorting stimuli into blocks
-% and expParamsHandlerSupervisedLearning.m for handling the loading of stimuli and existing
+% The script also requires stim2blocksSLpretest.m for sorting stimuli into blocks
+% and expParamsHandlerSLpretest.m for handling the loading of stimuli and existing
 % parameters/settings, and also for detecting and handling earlier sessions 
 % by the same subject (for multi-session experiment).
 %
@@ -83,7 +83,7 @@ if ~exist('stimArrayFile', 'var')
     end
 end
 if ~exist('blockNo', 'var')
-    blockNo = 2; % TODO
+    blockNo = 1;
 end
 if ~exist('triggers', 'var')
     triggers = 'no'; % TODO undo this after setting up triggers
@@ -118,16 +118,16 @@ disp([char(10), 'Loading params and stimuli, checking ',...
 
 % a function handles all stimulus sorting to blocks and potential conflicts
 % with earlier recordings for same subject
-[stimArray, ~,... 
-    startBlockNo,...
+[stimArray, ~,~,... 
+    startBlockNo,  blockIdx, trialIdx,...
     logVar, subLogF, returnFlag,... 
-    logHeader, stimTypes] = expParamsHandlerSupervisedLearning(subNum, stimArrayFile, blockNo);
+    logHeader, stimTypes] = expParamsHandlerSLpretest(subNum, stimArrayFile, blockNo);
 
 %%%%%%%%%%%%%%%%%%%%%% HARDCODED BREAKS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 breakBlocks = [4, 7];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% if there was early return from expParamsHandlerSupervisedLearning.m, abort
+% if there was early return from expParamsHandlerSLpretest.m, abort
 if returnFlag
     return
 end
@@ -187,7 +187,7 @@ else
     stimLength = unique(stimLength);
 end
 
-% we also check the length of a cord + sanity check
+% we also check the length of a chord + sanity check
 chordLength = cell2mat(stimArray(:, 3));
 if ~isequal(length(unique(chordLength)), 1)
     error([char(10), 'There are multiple different chord length values ',...
@@ -418,29 +418,10 @@ end
 % user message
 disp([char(10), 'Subject signalled she/he is ready, we go ahead with the task']);
 
-%% Preload all stimuli
-
-expopt = load(expoptFile, 'expopt');
-
-buffer = [];
-for i = 1:size(stimArray,1)
-    audioData = stimArray{i, 12};
-    buffer(end+1) = PsychPortAudio('CreateBuffer', [], audioData');
-end
-
-% Exit conditions:
-minTrialCount = 100; % TODO 100
-minReversalCount = 7; % TODO 10
-
 %% Blocks loop
-
-% overall trial counter
-trial = 0;
 
 % start from the block specified by the parameters/settings parts
 for block = startBlockNo:blockNo
-    
-    reversalCount = 0;
 
     % uniform background
     Screen('FillRect', win, backGroundColor);
@@ -449,6 +430,15 @@ for block = startBlockNo:blockNo
     % wait for releasing keys before going on
     releaseStart = GetSecs;
     KbReleaseWait([], releaseStart+2);
+    
+    % fill a dynamic buffer with data for whole block
+    % get trial index list for current block
+    trialList = trialIdx(blockIdx==block);
+    buffer = [];
+    for trial = min(trialList):max(trialList)
+        audioData = stimArray{trial, 12};
+        buffer(end+1) = PsychPortAudio('CreateBuffer', [], audioData');
+    end
 
     % counter for trials in given block
     trialCounterForBlock = 0;    
@@ -508,38 +498,11 @@ for block = startBlockNo:blockNo
     
     %% Trials loop
     
-    % TODO
-    initialStepSize = 80;
-    staircaseHitThreshold = 3;
-    staircaseMissThreshold = 1;
-    
-    stepSize = initialStepSize;
-    hitsInARow = 0;
-    missesInARow = 0;
-    direction = 0;
-    staircaseTendency = 0;
-    
-    toneCompConditions = [expopt.expopt.toneCompHigh, expopt.expopt.toneCompLow];
-    directionConditions = [-1, 1];
-    
     % trial loop (over the trials for given block)
-    while ~(trialCounterForBlock >= minTrialCount && reversalCount >= minReversalCount)
-        
-        % randomize parameters
-        toneComp = toneCompConditions(randi(2));
-        direction = directionConditions(randi(2));
-        desiredStepSize = stepSize * direction;
-        disp(['Step size:', num2str(desiredStepSize)]);
-        
-        filteredStimIndexes = find(cell2mat(stimArray(:,7))==desiredStepSize & cell2mat(stimArray(:,11))-cell2mat(stimArray(:,6))==toneComp);
-        stimIndex = filteredStimIndexes(randi(length(filteredStimIndexes)));
-        disp(['StimIndex: ', num2str(stimIndex)]);
+    for trial = min(trialList):max(trialList)
         
         % relative trial number (trial in given block)
         trialCounterForBlock = trialCounterForBlock+1;
-       
-        % absolute trial number
-        trial = trial + 1;
         
         % background with fixation cross, get trial start timestamp
         Screen('CopyWindow', fixCrossWin, win);
@@ -555,14 +518,15 @@ for block = startBlockNo:blockNo
         
         % user message
         disp([newline, 'Starting trial ', num2str(trialCounterForBlock)]);
-        if stepSizes(stimIndex) > 0
+        disp([newline, 'Step size: ', num2str(stepSizes(trial))]);
+        if stepSizes(trial) > 0
             disp('There is an ascending figure in this trial');
-        elseif stepSizes(stimIndex) < 0
+        elseif stepSizes(trial) < 0
             disp('There is a descending figure in this trial');
         end
 
         % fill audio buffer with next stimuli
-        PsychPortAudio('FillBuffer', pahandle, buffer(stimIndex));
+        PsychPortAudio('FillBuffer', pahandle, buffer(trialCounterForBlock));
         
         % wait till we are 100 ms from the start of the playback
         while GetSecs-trialStart <= iti(trial)-100
@@ -655,41 +619,12 @@ for block = startBlockNo:blockNo
             disp('Subject did not respond in time');
         end
         % accuraccy
-        if (detectedDirection(trial)==1 && desiredStepSize > 0) || (detectedDirection(trial)==-1 && desiredStepSize < 0)
+        if (detectedDirection(trial)==1 && stepSizes(trial) > 0) || (detectedDirection(trial)==-1 && stepSizes(trial) < 0)
             disp('Subject''s response was accurate');
             acc(trial) = 1;
-            hitsInARow = hitsInARow + 1;
-            missesInARow = 0;
-            disp(['Hits in a row:', num2str(hitsInARow)]);
-            if staircaseTendency == 0
-                staircaseTendency = -1;
-            end
-            if hitsInARow == staircaseHitThreshold
-                hitsInARow = 0;
-                stepSize = stepSize - 1;
-                if staircaseTendency == 1
-                    staircaseTendency = -1;
-                    reversalCount = reversalCount + 1;
-                    disp(['REVERSAL nr. ', num2str(reversalCount)]);
-                end
-            end
-        elseif (detectedDirection(trial)==1 && desiredStepSize < 0) || (detectedDirection(trial)==-1 && desiredStepSize > 0)
+        elseif (detectedDirection(trial)==1 && stepSizes(trial) < 0) || (detectedDirection(trial)==-1 && stepSizes(trial) > 0)
             disp('Subject made an error');
             acc(trial) = 0;
-            missesInARow = missesInARow + 1;
-            hitsInARow = 0;
-            disp(['Misses in a row:', num2str(missesInARow)]);
-            if staircaseTendency == 0
-                staircaseTendency = -1;
-            end
-            if missesInARow == staircaseMissThreshold
-                stepSize = stepSize + 1;
-                if staircaseTendency == -1
-                    staircaseTendency = 1;
-                    reversalCount = reversalCount + 1;
-                    disp(['REVERSAL nr. ', num2str(reversalCount)]);
-                end
-            end
         end
         % response time
         if ~isnan(respTime(trial))
@@ -701,17 +636,8 @@ for block = startBlockNo:blockNo
         disp(['Overall accuraccy in block so far is ', num2str(blockAcc), '%']);
         
         % accumulating all results in logging / results variable
-            
-        stimFileName = cell2mat(stimArray(stimIndex, 1));
-        toneComp = cell2mat(stimArray(stimIndex, 11));
-        figCoherence = cell2mat(stimArray(stimIndex, 6));
-        figStepSize = cell2mat(stimArray(stimIndex, 7));
-        figStartChord = cell2mat(stimArray(stimIndex, 9));
-        figEndChord = cell2mat(stimArray(stimIndex, 10));
     
-        logVar(end+1, 1:end-1) = {subNum, block, trial, stimFileName, toneComp, ...
-            figCoherence, figStepSize, figStartChord, figEndChord...
-            acc(trial), detectedDirection(trial),... 
+        logVar(trial+1, 10:end-1) = {acc(trial), detectedDirection(trial),... 
             respTime(trial), iti(trial),...
             trialStart, startTime-trialStart,... 
             (figStartCord(trial)-1)*chordLength,... 

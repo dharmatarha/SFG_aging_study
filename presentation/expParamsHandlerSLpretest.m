@@ -1,7 +1,7 @@
-function [stimArray, startTrialNo,... 
-    startBlockNo,...
+function [stimArray, sortIndices, startTrialNo,... 
+    startBlockNo, blockIdx, trialIdx...
     logVar, subLogF, returnFlag, logHeader,...
-    stimTypes] = expParamsHandlerSupervisedLearning(subNum, stimArrayFile, blockNo)
+    stimTypes] = expParamsHandlerSLpretest(subNum, stimArrayFile, blockNo)
 %% Function handling parameters/settings, stimuli and conflicts
 %
 % USAGE: [stimArray, sortIndices, startTrialNo,... 
@@ -54,7 +54,7 @@ function [stimArray, startTrialNo,...
 % logHeader     - column names for logging variable logVar 
 % stimTypes     - cell array detailing unique stimulus types, in
 %               human-readable form (with column headers), passed on from
-%               stim2blocksSupervisedLearning.m
+%               stim2blocksSLpretest.m
 %
 
 
@@ -89,15 +89,15 @@ disp([char(10), 'Called paramsHandler function with input args: ',...
 returnFlag = 0;
 % pre-set certain return variables to defaults to support early return
 startTrialNo = 1; startBlockNo = 1;
-logVar = {};
-stimArray = []; stimTypes = [];
+logVar = {}; blockIdx = []; trialIdx = [];
+stimArray = []; sortIndices = []; stimTypes = [];
 
 % subject folder name
 dirN = ['subject', num2str(subNum)];
 % subject parameters/settings file
-subParamsF = [dirN, '/sub', num2str(subNum), 'Params.mat'];
+subParamsF = [dirN, '/sub', num2str(subNum), 'ParamsPretest.mat'];
 % subject log file
-subLogF = [dirN, '/sub', num2str(subNum), 'Log.mat'];
+subLogF = [dirN, '/sub', num2str(subNum), 'LogPretest.mat'];
 % date and time of starting with a subject
 c = clock; d = date;
 timestamp = {[d, '-', num2str(c(4)), num2str(c(5))]};
@@ -127,10 +127,10 @@ if exist(dirN, 'dir')
                 oldLog = load(subLogF);
                 % check if stored log is expected format - sane header?
                 % no. of rows equals expected number of trials + 1?
-                %if isequal(oldLog.logVar(1, :), logHeader) && isequal(size(oldLog.logVar, 1), size(oldParams.trialIdx, 1)+1)
+                if isequal(oldLog.logVar(1, :), logHeader) && isequal(size(oldLog.logVar, 1), size(oldParams.trialIdx, 1)+1)
                     logFileFlag = 1;
                     logVar = oldLog.logVar;
-                %end
+                end
             end
         end
     end
@@ -206,14 +206,14 @@ end
 if ~oldParamsMatchFlag
 
     % user message
-    disp([char(10), 'We load the stimuli, perform checks on it and sort them to blocks with stim2blocksSupervisedLearning']);
+    disp([char(10), 'We load the stimuli, perform checks on it and sort them to blocks with stim2blocksSLpretest']);
     
     % get new random seed, set RNG
     randomseed = round(sum(c));
     rng(randomseed);
     % check stimuli and sort them into blocks
-    [stimTypes, stimTypeIdx,... 
-        stimArray] = stim2blocksSupervisedLearning(stimArrayFile, blockNo);   
+    [blockIdx, stimTypes, stimTypeIdx,... 
+        stimArray, trialIdx] = stim2blocksSLpretest(stimArrayFile, blockNo);   
     
 % if old params were matching the ones supplied now (e.g. in case of a 
 % second session of the subject) we just load stimuli and use the block 
@@ -224,9 +224,11 @@ elseif oldParamsMatchFlag
     disp([char(10), 'We load the stimuli and use the old params/settings for sorting them to blocks']);    
     
     % loading the stimuli results in a variable stimArray, this is the same
-    % as the one returned by stim2blocksSupervisedLearning
+    % as the one returned by stim2blocksSLpretest
     load(stimArrayFile);
     % we keep the old/loaded params for sorting
+    blockIdx = oldParams.blockIdx;
+    trialIdx = oldParams.trialIdx;
     stimTypes = oldParams.stimTypes;
     stimTypeIdx = oldParams.stimTypeIdx;
     randomseed = oldParams.randomseed;
@@ -235,14 +237,23 @@ elseif oldParamsMatchFlag
 end
 
 % save / re-save basic params
-save(subParamsF, 'stimTypes', 'stimTypeIdx',... 
+save(subParamsF, 'trialIdx', 'blockIdx', 'stimTypes', 'stimTypeIdx',... 
     'randomseed', 'stimArrayFile', 'timestamp', 'blockNo', 'subNum');
 
 % user message
 disp([char(10), 'Loaded stimuli and saved out parameters/settings into params file ', subParamsF]); 
 
-% attach stimulus type indices to stimulus array
-stimArray = [stimArray, num2cell(stimTypeIdx)];
+% attach stimulus type indices, block and trial indices to stimulus
+% array - but first a quick sanity check of stimArray size
+if ~isequal(size(stimArray), [length(trialIdx), 12])
+    error('Stimulus cell array ("stimArray") has unexpected size, investigate!');
+end
+stimArray = [stimArray, num2cell(stimTypeIdx), num2cell(blockIdx), num2cell(trialIdx)];
+% sort into trial order
+[stimArray, sortIndices] = sortrows(stimArray, size(stimArray, 2));
+
+% user message
+disp([char(10), 'Sorted stimuli into final stimArray']);
 
 %% Init logging/result variable if there was no logging/result file
 
@@ -251,8 +262,18 @@ if ~logFileFlag
     % user message
     disp([char(10), 'Initializing a logging variable']);
     % empty cell array, insert header
-    logVar = cell(1, size(logHeader, 2));
+    logVar = cell(size(stimArray, 1)+1, size(logHeader, 2));
     logVar(1, :) = logHeader;
+    % insert known columns in advance
+    logVar(2:end, strcmp(logHeader, 'subNum')) = num2cell(repmat(subNum, [size(stimArray, 1), 1]));  % subNum
+    logVar(2:end, strcmp(logHeader, 'blockNo')) = stimArray(:, 14);  % blockNo
+    logVar(2:end, strcmp(logHeader, 'trialNo')) = stimArray(:, 15);  % trialNo
+    logVar(2:end, strcmp(logHeader, 'stimNo')) = num2cell(sortIndices);  % stimNo - original stimArray row numbers (ie. stimulus numbers) before applying sortrows
+    logVar(2:end, strcmp(logHeader, 'toneComp')) = stimArray(:, 11);  % number of tone components in stimuli
+    logVar(2:end, strcmp(logHeader, 'figCoherence')) = stimArray(:, 6);  % figure coherence in chords
+    logVar(2:end, strcmp(logHeader, 'figStepSize')) = stimArray(:, 7);  % figure presence/absence
+    logVar(2:end, strcmp(logHeader, 'figStartChord')) = stimArray(:, 9);  % figure start in terms of chords
+    logVar(2:end, strcmp(logHeader, 'figEndChord')) = stimArray(:, 10);  % figure start in terms of chords
 end
 
 
@@ -279,7 +300,7 @@ if logFileFlag
     loggedBlockNo = cell2mat(logVar(loggedRTtrialsNo+1, strcmp(logHeader, 'blockNo'))); 
     
     % get the trial indices for the block in question
-    trialList = []; % TODO log staircase block terminations
+    trialList = trialIdx(blockIdx==loggedBlockNo);
     
     % check if the block was finished and if it was the last block
     if isequal(max(trialList), loggedTrialNo) && isequal(loggedBlockNo, blockNo)

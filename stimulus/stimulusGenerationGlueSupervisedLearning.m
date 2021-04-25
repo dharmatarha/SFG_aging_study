@@ -1,7 +1,7 @@
 function stimArrayFile = stimulusGenerationGlueSupervisedLearning(subNum, group, varargin)
 %% Function glueing stimulus generation steps together for subject-specific stimuli
 %
-% USAGE: stimArrayFile = stimulusGenerationGlueThresholded(subNum, trialMax=800, loudnessEq=true)
+% USAGE: stimArrayFile = stimulusGenerationGlueThresholded(subNum, trialMax=[1/stimType], loudnessEq=true)
 %
 % Our goal is generate stimuli similar to those used in Toth et al., 2016
 % (https://www.sciencedirect.com/science/article/pii/S1053811916303354?via%3Dihub).
@@ -18,7 +18,8 @@ function stimArrayFile = stimulusGenerationGlueSupervisedLearning(subNum, group,
 %
 % Optional inputs:
 % trialMax          - Numeric value, one of 12:1200. Number of trials to 
-%                   generate. Must be multiple of four. Defaults to 800.
+%                   generate. Must be a multiple of stimulus types that
+%                   exist.
 % loudnessEq        - Logical value. Flag for correcting for the perceived
 %                   loudness of different frequency components (see equal
 %                   loudness curves). Defaults to true. Gets passed on to 
@@ -71,9 +72,6 @@ if ~isempty(varargin)
     end
 end
 % assign default values
-if ~exist('trialMax', 'var')
-    trialMax = 400;
-end
 if ~exist('loudnessEq', 'var')
     loudnessEq = true;
 end
@@ -119,10 +117,15 @@ stepSizes = expopt.stepSizeMin:expopt.stepSizeStep:expopt.stepSizeMax;
 stepSizes = stepSizes(stepSizes~=0);
 
 % no. of stimulus types
-stimTypeNo = numel(stepSizes)*numel(backgrValues);
+stimTypeNo = numel(stepSizes)*2*numel(backgrValues);
 
 % no. of trials for each stimulus type
-trialPerType = trialMax/stimTypeNo;
+if ~exist('trialMax', 'var')
+    trialMax = stimTypeNo;
+    trialPerType = 1;
+else
+    trialPerType = trialMax/stimTypeNo;
+end
 
 % cell array holding the subfolder names with different stimulus types
 stimTypeDirs = cell(stimTypeNo, 1);
@@ -155,6 +158,9 @@ stimopt.figureCoh = baseCoherence;
 % counter for stimuli folders created
 counter = 1;   
 
+% directions (ascending, descending)
+directions = [1, -1];
+
 % loop over background tone numbers
 for b = 1:length(backgrValues)
     % change params accordingly
@@ -162,18 +168,22 @@ for b = 1:length(backgrValues)
 
     % loop over step sizes
     for s = stepSizes
+        
+        % loop over directions (ascending/descending)
+        for d = directions
 
-        stimopt.figureStepS = s;
+            stimopt.figureStepS = s * d;
 
-        c = clock;  % dir name based on current time
-        dirname = strcat('coh', num2str(baseCoherence), 'bg', num2str(backgrValues(b)), 'step', num2str(s));
-        mkdir(dirname);
+            dirname = strcat('coh', num2str(baseCoherence), 'bg', num2str(backgrValues(b)), 'step', num2str(stimopt.figureStepS));
+            mkdir(dirname);
 
-        % generate stimuli
-        stimTypeDirs{counter} = createSFGstimuliInDir(trialPerType, stimopt, dirname, loudnessEq);
+            % generate stimuli
+            stimTypeDirs{counter} = createSFGstimuliInDir(trialPerType, stimopt, dirname, loudnessEq);
 
-        % adjust counter
-        counter = counter+1;
+            % adjust counter
+            counter = counter+1;
+        
+        end % for d
 
     end % for s
 
@@ -200,7 +210,7 @@ stepTypeNo = (stimTypeNo*trialPerType)/length(stepSizes);
 % check if true
 figParams = cell2mat(stimArray(:, 7));
 for s = 1:length(stepSizes)
-    stepValueNo = sum(ismember(figParams, stepSizes(s)));
+    stepValueNo = sum(ismember(figParams, stepSizes(s))) * 2;
     if ~isequal(stepValueNo, stepTypeNo)
         error('Not the right number of trials with step size values in resulting stimArray! Needs debugging!');
     end
